@@ -1,0 +1,36 @@
+{
+  "name": "opendocu",
+  "version": "0.1.0",
+  "description": "Local-first versioned documentation search for coding agents.",
+  "type": "module",
+  "bin": {
+    "opendocu": "./bin/opendocu.mjs"
+  },
+  "files": [
+    "bin/",
+    "docs/",
+    "scripts/",
+    "src/",
+    "skills/",
+    "tests/",
+    ".codex-plugin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "npm test && node bin/opendocu.mjs --help",
+    "gate:real": "node scripts/real_node_gate.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "keywords": [
+    "coding-agent",
+    "documentation",
+    "search",
+    "local-first",
+    "codex-plugin"
+  ],
+  "license": "MIT"
+}

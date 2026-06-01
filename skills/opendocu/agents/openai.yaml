@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenDocu"
+  short_description: "Grow and query a local versioned docs store."
+  default_prompt: "Use OpenDocu to search local official docs before answering."

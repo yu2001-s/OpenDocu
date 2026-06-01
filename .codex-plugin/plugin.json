@@ -1,0 +1,22 @@
+{
+  "name": "opendocu",
+  "version": "0.1.0",
+  "description": "Local-first documentation memory for coding agents.",
+  "author": {
+    "name": "OpenDocu contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "OpenDocu",
+    "shortDescription": "Grow and query a local versioned docs store.",
+    "longDescription": "OpenDocu provides a deterministic CLI for indexing and searching local versioned Markdown documentation, plus a Codex skill that teaches agents how to grow the store from official sources.",
+    "developerName": "OpenDocu contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Local docs search",
+      "Version-aware documentation",
+      "Agent-maintained knowledge store"
+    ],
+    "defaultPrompt": "Use OpenDocu to search local official docs before answering."
+  }
+}
