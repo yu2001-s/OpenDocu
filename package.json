@@ -27,9 +27,13 @@
     "test": "node --test",
     "validate:repo": "node scripts/validate_repo.mjs",
     "check": "npm test && npm run validate:repo && node bin/opendocu.mjs --help",
+    "gate:fixture": "node scripts/release_gate.mjs",
+    "gate:package": "node scripts/package_smoke.mjs",
     "gate:real": "node scripts/real_node_gate.mjs",
     "gate:html": "node scripts/real_html_gate.mjs",
-    "gate:all": "npm run gate:real && npm run gate:html"
+    "gate:network": "npm run gate:real && npm run gate:html",
+    "gate:all": "npm run gate:network",
+    "gate:release": "npm run check && npm run gate:fixture && npm run gate:package && npm run gate:network"
   },
   "engines": {
     "node": ">=24"

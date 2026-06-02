@@ -89,3 +89,14 @@ Preserve headings, anchors, code fences, parameter tables, version history, stab
 ## No-Cheating Rule
 
 Do not create a tiny page tailored only to the user's current question. Store the official page or a coherent official section before searching again. After adding docs, use `opendocu search` and `opendocu get` for the answer.
+
+## Semantic Cards After Growth
+
+After importing broad raw docs, create or update semantic map cards when the docs use vocabulary that users are unlikely to search for, when a concept spans multiple headings, or when repeated questions need aliases/topics/relationships. Run:
+
+```bash
+opendocu map validate <library> --version <version>
+opendocu index
+```
+
+Do not summarize unsupported claims into semantic cards. Cards must point to raw doc IDs and matching `source_hashes`.

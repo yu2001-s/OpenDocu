@@ -3,9 +3,7 @@
 ## Preflight
 
 ```bash
-npm run check
-npm run gate:all
-npm pack --dry-run
+npm run gate:release
 ```
 
 Verify:
@@ -14,6 +12,7 @@ Verify:
 - `package.json` version matches `.claude-plugin/plugin.json`
 - `src/constants.mjs` reports the same CLI version
 - `CHANGELOG.md` contains the release entry
+- deterministic fixture, package install, and real network gates pass
 - `npm view opendocu version` still returns 404 or an older published version
 
 ## Publish

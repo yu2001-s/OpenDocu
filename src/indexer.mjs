@@ -7,6 +7,7 @@ import {
 } from "./constants.mjs";
 import { parseMarkdownFile } from "./markdown.mjs";
 import { indexPath, librariesPath, registryPath, sqliteIndexPath, toPosixPath } from "./paths.mjs";
+import { buildSemanticMapIndex, findStoreSemanticMapFiles } from "./semantic_map.mjs";
 import { writeSqliteIndex } from "./sqlite_index.mjs";
 import { tokenCounts, tokenize } from "./tokenize.mjs";
 
@@ -32,7 +33,7 @@ export async function initStore(storeRoot) {
 
 export async function buildIndex(storeRoot, options = {}) {
   const startedAt = new Date().toISOString();
-  const files = await findDocFiles(librariesPath(storeRoot));
+  const files = await findStorePageFiles(storeRoot);
   const docs = [];
   const chunks = [];
   const postings = Object.create(null);
@@ -87,6 +88,14 @@ export async function buildIndex(storeRoot, options = {}) {
     }
   }
 
+  const semanticMap = await buildSemanticMapIndex(storeRoot, {
+    docs,
+    library: options.library,
+    version: options.version,
+  });
+  warnings.push(...semanticMap.warnings);
+  warnings.push(...semanticMap.errors.map((error) => `semantic map excluded: ${error}`));
+
   const index = {
     schemaVersion: INDEX_SCHEMA_VERSION,
     generatedAt: startedAt,
@@ -94,11 +103,14 @@ export async function buildIndex(storeRoot, options = {}) {
     docs,
     chunks,
     postings,
+    semantic_map: semanticMap,
     stats: {
       docs: docs.length,
       chunks: chunks.length,
       terms: Object.keys(postings).length,
       avgChunkTokens: chunks.length ? totalTokenLength / chunks.length : 0,
+      semanticCards: semanticMap.stats.active_cards,
+      invalidSemanticCards: semanticMap.stats.invalid_cards,
     },
     warnings,
   };
@@ -121,8 +133,10 @@ export async function loadIndex(storeRoot) {
 }
 
 export async function storeStatus(storeRoot) {
-  const docFiles = await findDocFiles(librariesPath(storeRoot));
+  const docFiles = await findStorePageFiles(storeRoot);
+  const semanticMapFiles = await findStoreSemanticMapFiles(storeRoot);
   const currentFiles = new Set(docFiles.map((filePath) => relativeDisplay(storeRoot, filePath)));
+  const currentSemanticMapFiles = new Set(semanticMapFiles.map((filePath) => relativeDisplay(storeRoot, filePath)));
   const indexFile = indexPath(storeRoot);
   const sqliteFile = sqliteIndexPath(storeRoot);
   let index = null;
@@ -157,6 +171,13 @@ export async function storeStatus(storeRoot) {
       break;
     }
   }
+  for (const filePath of semanticMapFiles) {
+    const stat = await fs.stat(filePath);
+    if (!indexExists || stat.mtimeMs > indexMtimeMs) {
+      stale = true;
+      break;
+    }
+  }
   if (index?.docs) {
     const indexedFiles = new Set(index.docs.map((doc) => doc.file));
     if (indexedFiles.size !== currentFiles.size) {
@@ -170,6 +191,19 @@ export async function storeStatus(storeRoot) {
       }
     }
   }
+  if (index) {
+    const indexedMapFiles = new Set(index.semantic_map?.files || []);
+    if (indexedMapFiles.size !== currentSemanticMapFiles.size) {
+      stale = true;
+    } else {
+      for (const file of indexedMapFiles) {
+        if (!currentSemanticMapFiles.has(file)) {
+          stale = true;
+          break;
+        }
+      }
+    }
+  }
   if (!indexExists || !sqliteExists) {
     stale = true;
   }
@@ -177,7 +211,9 @@ export async function storeStatus(storeRoot) {
   return {
     storeRoot,
     docFiles,
+    semanticMapFiles,
     currentFiles: [...currentFiles],
+    currentSemanticMapFiles: [...currentSemanticMapFiles],
     indexFile,
     sqliteFile,
     indexExists,
@@ -213,6 +249,17 @@ export async function findDocFiles(root) {
 
   await walk(root);
   return results.sort();
+}
+
+export async function findStorePageFiles(storeRoot) {
+  const files = await findDocFiles(librariesPath(storeRoot));
+  return files.filter((filePath) => isStorePageFile(storeRoot, filePath));
+}
+
+function isStorePageFile(storeRoot, filePath) {
+  const relative = toPosixPath(path.relative(librariesPath(storeRoot), filePath));
+  const parts = relative.split("/");
+  return parts[1] === "versions" && parts[3] === "pages" && parts.length > 4;
 }
 
 export function searchableChunkText(chunk) {

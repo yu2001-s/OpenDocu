@@ -37,6 +37,16 @@ export function pagesPath(storeRoot, library, version) {
   );
 }
 
+export function semanticMapPath(storeRoot, library, version) {
+  return path.join(
+    librariesPath(storeRoot),
+    encodeLibrarySegment(library),
+    "versions",
+    encodeVersionSegment(version),
+    "map",
+  );
+}
+
 export function toPosixPath(value) {
   return value.split(path.sep).join("/");
 }

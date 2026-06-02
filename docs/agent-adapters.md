@@ -18,6 +18,7 @@ Adapters must not add hidden fetching, LLM summarization, or MCP behavior to the
 - search with explicit keywords
 - fetch official docs outside the CLI when local docs are missing
 - import local Markdown/MDX or HTML docs
+- maintain source-backed semantic map cards when retrieval needs aliases, topics, or relationships
 - rebuild the local index
 - answer from retrieved local evidence
 

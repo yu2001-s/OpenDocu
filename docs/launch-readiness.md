@@ -2,9 +2,7 @@
 
 OpenDocu v1 is launchable when these checks pass:
 
-- `npm run check`
-- `npm run gate:all`
-- `npm pack --dry-run`
+- `npm run gate:release`
 - CI is green on Node.js 24
 - independent agent forward test succeeds from an empty store
 - README and install docs describe the deterministic CLI/agent boundary
@@ -19,11 +17,14 @@ Current v1 coverage:
 - stale index protection
 - scoped package IDs
 - local aliases and resolver
+- source-hash validated semantic map for agent-maintained retrieval routing
 - Codex skill with progressive references
 - Claude Code plugin manifest and manual search command
 - generic `AGENTS.md` instructions for other shell-capable agents
 - real Node.js Markdown gate
 - real Node.js HTML gate
+- deterministic 10-library fixture gate
+- packaged npm tarball install smoke
 
 Known non-goals for v1:
 

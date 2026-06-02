@@ -10,7 +10,7 @@ Its CLI also fetches library documentation, manages skills, and configures MCP c
 OpenDocu intentionally starts from a different boundary:
 
 - local Markdown/MDX files are the source of truth
-- SQLite FTS and JSON indexes are derived
+- SQLite FTS and JSON debug artifacts are derived from one `opendocu index` run
 - the CLI is deterministic and does not fetch or summarize websites
 - the skill teaches agents how to fetch official docs, grow the store, index, and search
 

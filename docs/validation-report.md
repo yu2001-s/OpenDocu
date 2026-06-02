@@ -56,3 +56,9 @@ HTML import preserved versioned source URLs and ranked these niche sections firs
 | Capture async context for later use | `AsyncLocalStorage.snapshot context` | `node-html@24.16.0/async_context`, heading `Static method: AsyncLocalStorage.snapshot()` |
 | Check tracing channel subscribers | `diagnostics_channel tracingChannel hasSubscribers` | `node-html@24.16.0/diagnostics_channel`, heading `tracingChannel.hasSubscribers` |
 | Create an aborting signal after a delay | `AbortSignal timeout signal` | `node-html@24.16.0/globals`, heading `Static method: AbortSignal.timeout(delay)` |
+
+## Semantic Map Fixture Gate
+
+The deterministic release fixture initializes a semantic map for `node@24.16.0`, writes a source-backed `AsyncLocalStorage.snapshot()` API card, validates its `sources` and `source_hashes` against the imported raw docs, rebuilds the index, and confirms ordinary `opendocu search` routes a semantic-only query back to the raw official doc.
+
+The semantic map remains routing metadata. Final answers still verify claims through raw docs with `opendocu get`.

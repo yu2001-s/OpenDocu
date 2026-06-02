@@ -10,10 +10,11 @@ import {
   summarizeIndex,
 } from "./indexer.mjs";
 import { importHtmlTree, importMarkdownTree } from "./importer.mjs";
-import { indexPath, pagesPath, parseDocId, resolveStoreRoot } from "./paths.mjs";
+import { indexPath, pagesPath, parseDocId, resolveStoreRoot, sqliteIndexPath } from "./paths.mjs";
 import { resolveLibraryName, saveAlias } from "./registry.mjs";
 import { searchIndex } from "./search.mjs";
 import { searchSqlite } from "./sqlite_index.mjs";
+import { initSemanticMap, listSemanticCards, validateSemanticMap } from "./semantic_map.mjs";
 
 export async function runCli(argv, io = defaultIo()) {
   const parsed = parseArgs(argv);
@@ -44,7 +45,10 @@ export async function runCli(argv, io = defaultIo()) {
       io.out(
         [
           `Indexed ${index.stats.docs} docs, ${index.stats.chunks} chunks, ${index.stats.terms} terms`,
-          `Index: ${indexPath(storeRoot)}`,
+          `Raw-doc search index: ready`,
+          `  SQLite artifact: ${sqliteIndexPath(storeRoot)}`,
+          `  JSON debug artifact: ${indexPath(storeRoot)}`,
+          `Semantic map: ${index.semantic_map.stats.active_cards} active, ${index.semantic_map.stats.invalid_cards} invalid/excluded`,
           ...index.warnings.slice(0, 8).map((warning) => `WARN: ${warning}`),
           index.warnings.length > 8
             ? `WARN: ${index.warnings.length - 8} more warnings omitted`
@@ -146,14 +150,18 @@ export async function runCli(argv, io = defaultIo()) {
         match: parsed.flags.match || "auto",
       };
       let result;
-      try {
-        result = searchSqlite(storeRoot, options);
-      } catch (error) {
-        if (!/sqlite index not found/.test(error.message)) {
-          throw error;
-        }
-        const index = await loadIndex(storeRoot);
+      const index = status.index || (await loadIndex(storeRoot));
+      if (index.semantic_map?.stats?.active_cards > 0) {
         result = searchIndex(index, options);
+      } else {
+        try {
+          result = searchSqlite(storeRoot, options);
+        } catch (error) {
+          if (!/sqlite index not found/.test(error.message)) {
+            throw error;
+          }
+          result = searchIndex(index, options);
+        }
       }
       if (parsed.flags.json) {
         io.out(JSON.stringify({ ...result, requested_library: library, library_resolution: resolved }, null, 2));
@@ -193,6 +201,10 @@ export async function runCli(argv, io = defaultIo()) {
       io.out(formatDoctor(status));
       return;
     }
+
+    case "map":
+      await runMapCli(storeRoot, parsed, io);
+      return;
 
     default:
       throw new Error(`unknown command: ${command || "(none)"}\n\n${helpText()}`);
@@ -266,6 +278,7 @@ function flagKind(command, key) {
     resolve: new Set(["json"]),
     search: new Set(["json", "allowStale"]),
     list: new Set(["json"]),
+    map: new Set(["json"]),
   };
   const valueFlags = {
     "": new Set(["store"]),
@@ -279,6 +292,7 @@ function flagKind(command, key) {
     get: new Set(["store", "library", "version", "path"]),
     list: new Set(["store"]),
     doctor: new Set(["store"]),
+    map: new Set(["store", "version"]),
   };
 
   if (booleanFlags[command]?.has(key)) {
@@ -331,6 +345,63 @@ function parseGetFlags(flags) {
   };
 }
 
+async function runMapCli(storeRoot, parsed, io) {
+  const [subcommand, library, ...rest] = parsed.positionals;
+  switch (subcommand) {
+    case "init": {
+      const [version] = rest;
+      if (!library || !version) {
+        throw new Error("usage: opendocu map init <library> <version>");
+      }
+      await initStore(storeRoot);
+      const result = await initSemanticMap(storeRoot, { library, version });
+      io.out(`OpenDocu semantic map initialized at ${result.root}`);
+      return;
+    }
+
+    case "validate": {
+      const version = parsed.flags.version;
+      if (!library || !version) {
+        throw new Error("usage: opendocu map validate <library> --version <version> [--json]");
+      }
+      const canonicalLibrary = await resolveLibraryForMap(storeRoot, library);
+      const result = await validateSemanticMap(storeRoot, { library: canonicalLibrary.library, version });
+      if (parsed.flags.json) {
+        io.out(JSON.stringify({ ...result, requested_library: library, library_resolution: canonicalLibrary }, null, 2));
+      } else {
+        io.out(formatMapValidation({ ...result, requested_library: library, library_resolution: canonicalLibrary }));
+      }
+      if (result.errors.length > 0) {
+        throw new Error("semantic map validation failed");
+      }
+      return;
+    }
+
+    case "list": {
+      const version = parsed.flags.version;
+      if (!library || !version) {
+        throw new Error("usage: opendocu map list <library> --version <version> [--json]");
+      }
+      const canonicalLibrary = await resolveLibraryForMap(storeRoot, library);
+      const result = await listSemanticCards(storeRoot, { library: canonicalLibrary.library, version });
+      if (parsed.flags.json) {
+        io.out(JSON.stringify({ ...result, requested_library: library, library_resolution: canonicalLibrary }, null, 2));
+      } else {
+        io.out(formatMapList({ ...result, requested_library: library, library_resolution: canonicalLibrary }));
+      }
+      return;
+    }
+
+    default:
+      throw new Error("usage: opendocu map <init|validate|list> ...");
+  }
+}
+
+async function resolveLibraryForMap(storeRoot, requested) {
+  const status = await storeStatus(storeRoot);
+  return resolveLibraryName(storeRoot, requested, status.index);
+}
+
 function formatSearchResult(result) {
   const header = [
     `Search: ${result.library} ${result.terms.join(" ")}`,
@@ -346,6 +417,9 @@ function formatSearchResult(result) {
       ? `Resolved versions: ${result.version_candidates.join(", ")}`
       : "",
     `Match: ${result.match}${result.relaxed ? " (relaxed from all)" : ""}`,
+    result.semantic_map?.active_cards
+      ? `Semantic map: ${result.semantic_map.active_cards} active, ${result.semantic_map.matched_cards} matched`
+      : "",
     `Results: ${result.count}`,
   ]
     .filter(Boolean)
@@ -360,6 +434,9 @@ function formatSearchResult(result) {
         `   Heading: ${item.heading_path.join(" > ")}`,
         item.url ? `   Source: ${item.url}` : "",
         `   File: ${item.file}`,
+        item.semantic_matches?.length
+          ? `   Semantic routing: ${item.semantic_matches.map((match) => `${match.title} (${match.file})`).join(", ")}`
+          : "",
         `   Snippet: ${item.snippet}`,
       ]
         .filter(Boolean)
@@ -368,6 +445,33 @@ function formatSearchResult(result) {
     .join("\n");
 
   return body ? `${header}\n${body}` : header;
+}
+
+function formatMapValidation(result) {
+  const lines = [
+    `Semantic map: ${result.root}`,
+    `Status: ${result.status}`,
+    `Active cards: ${result.cards.length}`,
+    `Invalid cards: ${result.invalid_cards.length}`,
+  ];
+  if (result.errors.length > 0) {
+    lines.push("Errors:");
+    lines.push(...result.errors.map((error) => `- ${error}`));
+  }
+  if (result.warnings.length > 0) {
+    lines.push("Warnings:");
+    lines.push(...result.warnings.map((warning) => `- ${warning}`));
+  }
+  return lines.join("\n");
+}
+
+function formatMapList(result) {
+  if (result.cards.length === 0) {
+    return `No semantic cards found at ${result.root}`;
+  }
+  return result.cards
+    .map((card) => `${card.relativePath}: ${card.title} (${card.kind})`)
+    .join("\n");
 }
 
 function formatList(items) {
@@ -387,13 +491,17 @@ function formatList(items) {
 
 function formatDoctor(status) {
   const lines = [`Store: ${status.storeRoot}`];
-  lines.push(`Docs: ${status.docFiles.length}`);
-  lines.push(status.indexExists ? `JSON index: ${status.indexFile}` : "JSON index: missing");
-  lines.push(status.sqliteExists ? `SQLite index: ${status.sqliteFile}` : "SQLite index: missing");
-  lines.push(status.stale ? "Status: stale or missing index" : "Status: ready");
+  lines.push(`Raw docs: ${status.docFiles.length}`);
+  lines.push("Raw-doc search index:");
+  lines.push(status.sqliteExists ? `  SQLite artifact: ${status.sqliteFile}` : "  SQLite artifact: missing");
+  lines.push(status.indexExists ? `  JSON debug artifact: ${status.indexFile}` : "  JSON debug artifact: missing");
+  lines.push(status.stale ? "Status: stale or missing raw-doc index" : "Status: ready");
   if (status.index?.stats) {
     lines.push(
       `Indexed: ${status.index.stats.docs} docs, ${status.index.stats.chunks} chunks, ${status.index.stats.terms} terms`,
+    );
+    lines.push(
+      `Semantic map: ${status.index.semantic_map?.stats?.active_cards || 0} active, ${status.index.semantic_map?.stats?.invalid_cards || 0} invalid/excluded`,
     );
   }
   if (status.index?.warnings?.length) {
@@ -406,6 +514,7 @@ function helpText() {
   return `OpenDocu ${VERSION}
 
 Usage:
+  Raw official docs:
   opendocu init [--store <path>]
   opendocu import <library> <version> <source-dir> [--url-base <url>] [--store <path>]
   opendocu import-html <library> <version> <source-dir> [--url-base <url>] [--store <path>]
@@ -415,9 +524,18 @@ Usage:
   opendocu search <library> <keyword...> [--version <version>] [--limit <n>] [--match all|any|auto] [--json] [--allow-stale]
   opendocu get <library@version/path> [--store <path>]
   opendocu get --library <name> --version <version> --path <path> [--store <path>]
+
+  Semantic map maintenance:
+  opendocu map init <library> <version> [--store <path>]
+  opendocu map validate <library> --version <version> [--json] [--store <path>]
+  opendocu map list <library> --version <version> [--json] [--store <path>]
+
+  Store health:
   opendocu list [--store <path>] [--json]
   opendocu doctor [--store <path>]
 
+Run opendocu index after importing or editing raw docs or semantic cards. It builds both raw-doc search artifacts and activates valid semantic map cards.
 Search defaults to --match auto: exact all-keyword matching first, then any-keyword fallback if empty.
+Semantic cards improve ranking and routing inside opendocu search. Search results remain raw official doc evidence.
 The CLI is deterministic. Agents choose keywords, fetch docs, and write Markdown files.`;
 }

@@ -54,6 +54,12 @@ if (pluginJson.mcpServers || claudePluginJson.mcpServers) {
   errors.push("OpenDocu must not declare MCP servers");
 }
 
+for (const scriptName of ["gate:fixture", "gate:package", "gate:network", "gate:release"]) {
+  if (typeof packageJson.scripts?.[scriptName] !== "string" || packageJson.scripts[scriptName].trim() === "") {
+    errors.push(`package.json scripts must include ${scriptName}`);
+  }
+}
+
 validatePackageFiles([
   ".codex-plugin/",
   ".claude-plugin/",

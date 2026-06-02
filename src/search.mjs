@@ -1,4 +1,5 @@
 import { normalizePhrase, queryGroups } from "./tokenize.mjs";
+import { semanticMatchesFor } from "./semantic_map.mjs";
 import { resolveVersionCandidates } from "./versioning.mjs";
 
 const K1 = 1.4;
@@ -38,6 +39,8 @@ function runSearch(index, options, groups, mode) {
   const chunks = index.chunks || [];
   const postings = index.postings || {};
   const candidates = new Map();
+  const semanticMatches = semanticMatchesFor(index, options, groups, mode);
+  const semanticByDoc = semanticMatchesByDoc(semanticMatches);
 
   for (const group of groups) {
     for (const token of group.tokens) {
@@ -64,6 +67,29 @@ function runSearch(index, options, groups, mode) {
     }
   }
 
+  const docToChunks = chunkIndexesByDoc(chunks, options);
+  for (const candidate of candidates.values()) {
+    const chunk = chunks[candidate.chunkIndex];
+    applySemanticMatches(candidate, semanticByDoc.get(chunk.docId));
+  }
+  for (const [docId, matches] of semanticByDoc) {
+    const alreadyPresent = [...candidates.values()].some((candidate) => chunks[candidate.chunkIndex]?.docId === docId);
+    if (alreadyPresent) {
+      continue;
+    }
+    const firstChunkIndex = docToChunks.get(docId)?.[0];
+    if (firstChunkIndex === undefined) {
+      continue;
+    }
+    const candidate = {
+      chunkIndex: firstChunkIndex,
+      tokenCounts: new Map(),
+      matchedGroups: new Set(),
+    };
+    applySemanticMatches(candidate, matches);
+    candidates.set(firstChunkIndex, candidate);
+  }
+
   const results = [];
   for (const candidate of candidates.values()) {
     if (mode === "all" && candidate.matchedGroups.size < groups.length) {
@@ -84,6 +110,14 @@ function runSearch(index, options, groups, mode) {
       file: chunk.file,
       snippet: makeSnippet(chunk.text, groups),
       matched_terms: [...candidate.matchedGroups],
+      semantic_matches: (candidate.semanticMatches || []).map((match) => ({
+        card_id: match.card_id,
+        title: match.title,
+        kind: match.kind,
+        file: match.file,
+        edges: match.edges,
+        matched_terms: match.matched_terms,
+      })),
     });
   }
 
@@ -103,6 +137,12 @@ function runSearch(index, options, groups, mode) {
     match: mode,
     count: results.length,
     results: results.slice(0, limit),
+    semantic_matches: semanticMatches.slice(0, 10),
+    semantic_map: {
+      active_cards: index.semantic_map?.stats?.active_cards || 0,
+      invalid_cards: index.semantic_map?.stats?.invalid_cards || 0,
+      matched_cards: semanticMatches.length,
+    },
   };
 }
 
@@ -159,8 +199,50 @@ function scoreCandidate(index, chunk, candidate, groups) {
   if (candidate.matchedGroups.size === groups.length) {
     score += groups.length;
   }
+  if (candidate.semanticMatches?.length) {
+    score += Math.max(...candidate.semanticMatches.map((match) => match.score)) * 0.75 + 6;
+  }
 
   return Number(score.toFixed(6));
+}
+
+function semanticMatchesByDoc(matches) {
+  const byDoc = new Map();
+  for (const match of matches) {
+    for (const docId of match.sources) {
+      if (!byDoc.has(docId)) {
+        byDoc.set(docId, []);
+      }
+      byDoc.get(docId).push(match);
+    }
+  }
+  return byDoc;
+}
+
+function chunkIndexesByDoc(chunks, options) {
+  const byDoc = new Map();
+  for (const [index, chunk] of chunks.entries()) {
+    if (!chunkMatchesScope(chunk, options)) {
+      continue;
+    }
+    if (!byDoc.has(chunk.docId)) {
+      byDoc.set(chunk.docId, []);
+    }
+    byDoc.get(chunk.docId).push(index);
+  }
+  return byDoc;
+}
+
+function applySemanticMatches(candidate, matches = []) {
+  if (matches.length === 0) {
+    return;
+  }
+  candidate.semanticMatches = [...(candidate.semanticMatches || []), ...matches];
+  for (const match of matches) {
+    for (const term of match.matched_terms) {
+      candidate.matchedGroups.add(term);
+    }
+  }
 }
 
 export function makeSnippet(text, groups) {
