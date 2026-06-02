@@ -1,6 +1,6 @@
 {
   "name": "opendocu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local-first versioned documentation search for coding agents.",
   "type": "module",
   "bin": {

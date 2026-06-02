@@ -85,6 +85,85 @@ Use \`--watch\` for watch mode. Use \`--version\` to print the Node.js version.
   assert.match(output.at(-1), /node@24\/cli/);
 });
 
+test("sqlite search ranks exact symbol-heavy phrases before related token hits", async () => {
+  const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
+  const relatedPath = path.join(
+    store,
+    "libraries",
+    "tailwindcss",
+    "versions",
+    "4",
+    "pages",
+    "hover-focus-and-other-states.mdx",
+  );
+  const exactPath = path.join(
+    store,
+    "libraries",
+    "tailwindcss",
+    "versions",
+    "4",
+    "pages",
+    "styling-with-utility-classes.mdx",
+  );
+  await fs.mkdir(path.dirname(relatedPath), { recursive: true });
+  await fs.writeFile(
+    relatedPath,
+    `---
+library: tailwindcss
+version: "4"
+title: Hover Focus And Other States
+url: https://tailwindcss.com/docs/hover-focus-and-other-states
+---
+
+# Hover Focus And Other States
+
+## Data attributes
+
+Use data-active attributes in variants. This related section mentions data-active,
+span elements, text color utilities, blue palettes, and 600 shades many times.
+data-active span text blue 600 data-active span text blue 600 data-active span text blue 600.
+`,
+  );
+  await fs.writeFile(
+    exactPath,
+    `---
+library: tailwindcss
+version: "4"
+title: Styling With Utility Classes
+url: https://tailwindcss.com/docs/styling-with-utility-classes
+---
+
+# Styling With Utility Classes
+
+## Complex selectors
+
+Arbitrary variants let you write selectors directly in a class name:
+\`[&>[data-active]+span]:text-blue-600\`.
+`,
+  );
+
+  const output = [];
+  const io = { out: (value) => output.push(value) };
+  await runCli(["index", "--store", store], io);
+  await runCli(
+    [
+      "search",
+      "tailwindcss",
+      "[&>[data-active]+span]:text-blue-600",
+      "data-active",
+      "--version",
+      "4",
+      "--store",
+      store,
+      "--json",
+    ],
+    io,
+  );
+
+  const result = JSON.parse(output.at(-1));
+  assert.equal(result.results[0].doc_id, "tailwindcss@4/styling-with-utility-classes");
+});
+
 test("default search relaxes from all to any only when strict search is empty", async () => {
   const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
   const docPath = path.join(

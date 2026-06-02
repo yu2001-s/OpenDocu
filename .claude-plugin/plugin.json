@@ -1,7 +1,7 @@
 {
   "name": "opendocu",
   "displayName": "OpenDocu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local-first versioned documentation search for coding agents.",
   "author": {
     "name": "OpenDocu contributors"

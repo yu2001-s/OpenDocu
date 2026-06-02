@@ -125,6 +125,52 @@ test("symbol-aware tokenization finds niche API symbols", async () => {
   assert.equal(result.results[0].doc_id, "node@22/api/async-context");
 });
 
+test("exact symbol-heavy phrases outrank related token-only chunks", async () => {
+  const store = await makeStore();
+  await writeDoc(
+    store,
+    "tailwindcss",
+    "4",
+    "hover-focus-and-other-states.mdx",
+    frontmatter("tailwindcss", "4", "Hover Focus And Other States", "https://tailwindcss.com/docs/hover-focus-and-other-states") +
+      `
+# Hover Focus And Other States
+
+## Data attributes
+
+Use data-active attributes in variants. This related section mentions data-active,
+span elements, text color utilities, blue palettes, and 600 shades many times.
+data-active span text blue 600 data-active span text blue 600 data-active span text blue 600.
+`,
+  );
+  await writeDoc(
+    store,
+    "tailwindcss",
+    "4",
+    "styling-with-utility-classes.mdx",
+    frontmatter("tailwindcss", "4", "Styling With Utility Classes", "https://tailwindcss.com/docs/styling-with-utility-classes") +
+      `
+# Styling With Utility Classes
+
+## Complex selectors
+
+Arbitrary variants let you write selectors directly in a class name:
+\`[&>[data-active]+span]:text-blue-600\`.
+`,
+  );
+
+  const index = await buildIndex(store);
+  const result = searchIndex(index, {
+    library: "tailwindcss",
+    version: "4",
+    terms: ["[&>[data-active]+span]:text-blue-600", "data-active"],
+    match: "all",
+    limit: 5,
+  });
+
+  assert.equal(result.results[0].doc_id, "tailwindcss@4/styling-with-utility-classes");
+});
+
 test("underscore symbols are searchable with separated words", async () => {
   const store = await makeStore();
   await writeDoc(

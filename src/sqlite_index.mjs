@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { sqliteIndexPath } from "./paths.mjs";
 import { makeSnippet } from "./search.mjs";
-import { normalizePhrase, queryGroups, tokenize } from "./tokenize.mjs";
+import { exactPhraseBoost, normalizePhrase, queryGroups, tokenize } from "./tokenize.mjs";
 import { resolveVersionCandidates } from "./versioning.mjs";
 
 const TOKENIZER = "unicode61 tokenchars ''.:@_/#$-''";
@@ -270,9 +270,13 @@ function rowToResult(row, groups) {
     }
     return sum + boost;
   }, 0);
+  const phraseBoost = groups.reduce(
+    (sum, group) => sum + (group.phrase && haystack.includes(group.phrase) ? exactPhraseBoost(group) : 0),
+    0,
+  );
 
   return {
-    score: Number((-row.rank + headingBoost).toFixed(6)),
+    score: Number((-row.rank + headingBoost + phraseBoost).toFixed(6)),
     doc_id: row.doc_id,
     chunk_id: row.chunk_id,
     library: row.library,

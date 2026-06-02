@@ -1,4 +1,4 @@
-export const VERSION = "1.0.0";
+export const VERSION = "1.0.1";
 export const INDEX_SCHEMA_VERSION = 1;
 export const DEFAULT_INDEX_FILE = "opendocu.index.json";
 export const DEFAULT_SQLITE_INDEX_FILE = "opendocu.sqlite";

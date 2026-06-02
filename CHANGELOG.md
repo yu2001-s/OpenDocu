@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Improved search ranking for exact symbol-heavy phrases such as utility classes, selectors, and option strings.
+
 ## 1.0.0
 
 - Added deterministic local Markdown/MDX import.

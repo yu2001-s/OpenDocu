@@ -1,4 +1,4 @@
-import { normalizePhrase, queryGroups } from "./tokenize.mjs";
+import { exactPhraseBoost, normalizePhrase, queryGroups } from "./tokenize.mjs";
 import { semanticMatchesFor } from "./semantic_map.mjs";
 import { resolveVersionCandidates } from "./versioning.mjs";
 
@@ -192,7 +192,7 @@ function scoreCandidate(index, chunk, candidate, groups) {
 
   for (const group of groups) {
     if (group.phrase && haystack.includes(group.phrase)) {
-      score += 5;
+      score += exactPhraseBoost(group);
     }
   }
 

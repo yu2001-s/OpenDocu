@@ -42,6 +42,21 @@ export function normalizePhrase(value) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+export function exactPhraseBoost(group) {
+  if (!group?.phrase) {
+    return 0;
+  }
+  const compactLength = group.phrase.replace(/\s+/g, "").length;
+  const symbolCount = (group.phrase.match(/[^a-z0-9\s]/g) || []).length;
+  const tokenCount = new Set(group.tokens || []).size;
+  return (
+    5 +
+    Math.min(12, Math.floor(compactLength / 6)) +
+    Math.min(8, symbolCount) +
+    Math.min(5, Math.max(0, tokenCount - 1))
+  );
+}
+
 function expandToken(raw) {
   const lower = raw.toLowerCase();
   const values = new Set();
