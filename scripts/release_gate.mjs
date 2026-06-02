@@ -428,6 +428,11 @@ const SKILL_CONTRACTS = [
     file: "skills/opendocu/references/retrieval-repair.md",
     mustContain: ["failed search", "opendocu get", "Replay the original failed search", "Do not create cards from model memory"],
   },
+  {
+    id: "source-normalization-contract",
+    file: "skills/opendocu/references/source-normalization.md",
+    mustContain: ["official-doc adapter", "source_format", "source_adapter", "opendocu import"],
+  },
 ];
 
 const BLACK_BOX_PROMPTS = [

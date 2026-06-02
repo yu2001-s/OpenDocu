@@ -54,7 +54,7 @@ if (pluginJson.mcpServers || claudePluginJson.mcpServers) {
   errors.push("OpenDocu must not declare MCP servers");
 }
 
-for (const scriptName of ["gate:fixture", "gate:workflow-sim", "gate:package", "gate:network", "gate:release"]) {
+for (const scriptName of ["gate:fixture", "gate:normalization", "gate:workflow-sim", "gate:package", "gate:network", "gate:release"]) {
   if (typeof packageJson.scripts?.[scriptName] !== "string" || packageJson.scripts[scriptName].trim() === "") {
     errors.push(`package.json scripts must include ${scriptName}`);
   }
@@ -77,6 +77,7 @@ validateCommand("commands/search.md");
 validateReadmeInstallPrompt("README.md");
 validateLiveEvalDoc("docs/live-agent-eval.md");
 validateRetrievalRepairDoc("skills/opendocu/references/retrieval-repair.md");
+validateSourceNormalizationDoc("skills/opendocu/references/source-normalization.md");
 validateSourceFirstAlignment();
 rejectTodoMarkers([
   "AGENTS.md",
@@ -87,6 +88,7 @@ rejectTodoMarkers([
   "docs/agent-adapters.md",
   "skills/opendocu/SKILL.md",
   "skills/opendocu/references/retrieval-repair.md",
+  "skills/opendocu/references/source-normalization.md",
 ]);
 
 if (errors.length > 0) {
@@ -221,6 +223,23 @@ function validateRetrievalRepairDoc(relativePath) {
   }
 }
 
+function validateSourceNormalizationDoc(relativePath) {
+  const filePath = path.join(ROOT, relativePath);
+  let content = "";
+  try {
+    content = fs.readFileSync(filePath, "utf8");
+  } catch {
+    errors.push(`${relativePath} is missing`);
+    return;
+  }
+
+  for (const required of ["Source Normalization", "official-doc adapter", "source_format", "source_adapter", "opendocu import"]) {
+    if (!content.includes(required)) {
+      errors.push(`${relativePath} must mention ${required}`);
+    }
+  }
+}
+
 function validateSourceFirstAlignment() {
   const requiredByFile = {
     "README.md": ["Source docs are the knowledge base", "Semantic cards are retrieval patches"],
@@ -230,12 +249,14 @@ function validateSourceFirstAlignment() {
     "docs/validation-gate.md": ["source-first retrieval", "failure-driven semantic-card repair"],
     "docs/validation-report.md": ["failure-driven retrieval repair", "Do not interpret low card counts as failure"],
     "skills/opendocu/SKILL.md": ["run retrieval repair", "Raw official docs are the knowledge base"],
+    "skills/opendocu/references/source-normalization.md": ["official-doc adapter", "source-backed Markdown/MDX", "source_format"],
     "skills/opendocu/references/searching.md": ["`opendocu search` and `opendocu get` are different steps", "follow `retrieval-repair.md`"],
     "skills/opendocu/references/semantic-map.md": ["retrieval patches", "Do not attempt to mirror every original doc page"],
     "skills/opendocu/references/validation.md": ["Low semantic-card counts are not a failure", "justified as retrieval patches"],
     "src/cli.mjs": ["Retrieval repair metadata", "optional retrieval patches"],
     "scripts/release_gate.mjs": ["retrieval-repair-initial-miss", "retrieval-repair-replay-routes-raw-doc"],
     "scripts/workflow_sim_gate.mjs": ["repair-initial-search-miss", "repair-replay-routes-raw-doc"],
+    "scripts/source_normalization_gate.mjs": ["structured official-source fixture", "source_adapter", "niche-parameter-search"],
     "scripts/live_agent_eval.mjs": ["Raw docs are the knowledge base", "Correct raw-doc retrieval is enough"],
   };
 

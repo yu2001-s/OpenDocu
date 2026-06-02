@@ -18,7 +18,7 @@ The skill is the intelligence layer:
 - infer the library and version from the project
 - choose search terms from the user's request
 - fetch official documentation with the agent's normal tools when local docs are missing
-- preserve original docs as Markdown or MDX
+- normalize official source formats into source-backed Markdown or MDX
 - run `opendocu index` after raw docs change
 - repair retrieval with semantic cards when raw docs exist but search misses aliases, topics, or relationships
 - search again and answer from cited local material
@@ -26,6 +26,8 @@ The skill is the intelligence layer:
 ## Source Of Truth
 
 Markdown and MDX files under `libraries/<library>/versions/<version>/pages/` are canonical. `opendocu index` is the only raw-doc indexing command. It writes a SQLite search artifact for normal CLI queries and a JSON debug artifact under `index/`; both are disposable and must be rebuilt whenever raw doc files change.
+
+Generic docs support comes from normalization before import. Official docs can start as repository Markdown, HTML, generated site JSON, API specs, language-native references, manpages, or sparse README-style docs. The agent converts those official source shapes into auditable Markdown/MDX pages with source URLs and provenance metadata, then the deterministic CLI treats them like every other raw page.
 
 The `libraries/<library>/versions/<version>/map/` directory is a semantic retrieval layer maintained by the agent. It can contain API cards, concept summaries, aliases, topics, same-version links, comparisons, and version notes, plus `README.md` and `log.md`. Semantic cards are targeted retrieval patches, not authority, not a complete graph over the docs, and not a second search interface. Each card must include raw OpenDocu `sources` and matching `source_hashes`; `opendocu index` excludes invalid cards and activates valid cards for ordinary `opendocu search`.
 

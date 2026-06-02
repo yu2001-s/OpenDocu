@@ -158,6 +158,8 @@ test("imports a local markdown tree with version metadata", async () => {
 title: Official Diagnostics Channel
 url: https://nodejs.org/api/diagnostics_channel.html
 stability: stable
+source_format: structured-json
+source_adapter: official-doc-normalizer
 ---
 
 # Diagnostics Channel
@@ -179,6 +181,9 @@ The \`diagnostics_channel.tracingChannel()\` API creates tracing channels.
   assert.match(stored, /title: "Official Diagnostics Channel"/);
   assert.match(stored, /url: "https:\/\/nodejs\.org\/api\/diagnostics_channel\.html"/);
   assert.match(stored, /source_stability: "stable"/);
+  assert.match(stored, /source_format: "structured-json"/);
+  assert.match(stored, /source_adapter: "official-doc-normalizer"/);
+  assert.doesNotMatch(stored, /source_source_format/);
   assert.match(stored, /^---\n[\s\S]+?\n---\n\n# Diagnostics Channel/);
 
   const index = await buildIndex(store);

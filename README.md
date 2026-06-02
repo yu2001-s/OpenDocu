@@ -2,7 +2,7 @@
 
 OpenDocu is a local-first documentation memory for coding agents.
 
-The CLI is intentionally deterministic. It does not fetch from the internet, parse arbitrary websites, summarize docs, or interpret user questions. Agents do that work through the bundled skill. OpenDocu stores versioned Markdown or MDX files, builds one raw-doc search index, and returns ranked source-backed matches.
+The CLI is intentionally deterministic. It does not fetch from the internet, crawl arbitrary websites, summarize docs, or interpret user questions. Agents do that work through the bundled skill. OpenDocu stores versioned Markdown or MDX files, builds one raw-doc search index, and returns ranked source-backed matches.
 
 ## Install
 
@@ -78,6 +78,17 @@ opendocu import-html node 24.16.0 ./node-html/api \
 opendocu index
 ```
 
+Generic official source formats:
+
+If official docs are generated JSON, API specs, language-native reference output, manpages, dynamic docs pages, or another non-Markdown shape, normalize the official material into Markdown/MDX pages first. Keep source URLs, retrieved time, source format, adapter name, identifiers, declarations, parameters, warnings, version notes, examples, and links. Then use the same import/index/search/get flow.
+
+```bash
+opendocu import widgetkit 2.4.0 ./normalized-widgetkit-docs \
+  --url-base https://docs.example.com/widgetkit/2.4
+opendocu index
+opendocu doctor
+```
+
 ## Store Layout
 
 Agents write docs as files:
@@ -141,12 +152,12 @@ The OpenDocu skill handles:
 - deciding the correct library and version
 - choosing search keywords
 - fetching official docs when local docs are missing
-- preserving source material as Markdown or MDX
+- normalizing any official source format into source-backed Markdown or MDX
 - repairing retrieval with source-backed semantic cards when raw docs exist but search misses aliases, topics, or relationships
 - running `opendocu index`
 - answering from cited local docs
 
-Agents can write Markdown files directly, use `opendocu import` after fetching an official Markdown/MDX docs tree, or use `opendocu import-html` after fetching an official HTML docs tree. Import commands do not fetch from the internet.
+Agents can write Markdown files directly, use `opendocu import` after fetching an official Markdown/MDX docs tree, use `opendocu import-html` after fetching an official HTML docs tree, or normalize any other official source shape into Markdown/MDX before import. Import commands do not fetch from the internet.
 
 ## Agent Adapters
 
@@ -163,6 +174,7 @@ See `docs/agent-adapters.md` for the support matrix and adapter contract.
 ```bash
 npm run check
 npm run gate:fixture
+npm run gate:normalization
 npm run gate:network
 npm run gate:release
 npm run eval:live:plan -- --run-dir .tmp/live-agent-eval/run-001
@@ -170,5 +182,6 @@ npm run eval:live:score -- .tmp/live-agent-eval/run-001
 ```
 
 The fixture gate grows an empty store across 10 library scenarios, then checks retrieval, version boundaries, option-like keywords, sparse-doc behavior, `get`, stale index rejection, and skill contracts.
+The normalization gate starts from a structured official-source fixture, normalizes it into Markdown pages, imports and indexes through the real CLI, then checks provenance, exact-symbol search, niche parameter search, `get`, and no-evidence behavior.
 The network gates import official Node.js `v24.16.0` docs in both Markdown and HTML forms, then ask niche versioned API questions through OpenDocu search.
 The live-agent eval is a manual five-set blind test for agent judgment: growers do not see query prompts, and query agents must answer from local OpenDocu evidence. See `docs/live-agent-eval.md`.

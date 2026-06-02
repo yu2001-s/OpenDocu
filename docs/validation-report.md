@@ -79,6 +79,12 @@ It then runs multiple scripted query personas against that grown store:
 
 This gate is deterministic CI evidence for the mechanics of the grow/search/get workflow and failure-driven retrieval repair. It does not prove autonomous ingestion quality. Live subagent runs remain necessary spot checks for whether agents naturally choose the right official sources, import broad enough docs, repair retrieval only when raw evidence exists, and answer from local evidence.
 
+## Source Normalization Gate
+
+`npm run gate:normalization` covers the generic ingestion path for docs that are neither Markdown nor simple HTML. The gate starts with structured official-source records, normalizes them into Markdown pages with official URLs, `source_format`, `source_adapter`, and source identifiers, imports those pages through the real CLI, indexes, and verifies exact-symbol search, niche parameter search, `opendocu get`, and no-evidence behavior.
+
+This is the release check for the generic adapter contract. OpenDocu does not need built-in product-specific search paths for generated docs, API specs, language-native references, or manpages; those sources must become source-backed pages before indexing.
+
 ## Live-Agent Eval Harness
 
 `npm run eval:live:plan` generates a manual five-set blind eval for Node.js, React, Next.js, Python, and README-centric package docs. Each set starts from an empty store, gives one grower agent only the library/version and official-source rule, then runs independent query agents against the grown store. Query sets include easy lookups, exact symbols, version-specific details, cross-page concepts, semantic-alias phrasing, and negative/no-evidence questions.

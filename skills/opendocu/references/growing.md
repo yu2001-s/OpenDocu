@@ -1,6 +1,6 @@
 # Growing The Store
 
-Grow OpenDocu only from authoritative documentation. The CLI does not fetch from the internet; the agent fetches official docs using available tools, then imports or writes local Markdown/MDX.
+Grow OpenDocu only from authoritative documentation. The CLI does not fetch from the internet; the agent fetches official docs using available tools, normalizes any source format into source-backed Markdown/MDX when needed, then imports or writes those pages locally.
 
 ## Source Preference
 
@@ -39,6 +39,14 @@ opendocu index
 
 HTML import is deterministic and best-effort. It preserves headings, code blocks, links, canonical URLs, and source hashes, but you should inspect search results and use `opendocu get` for pages with complex tables or custom components.
 
+## Generic Source Formats
+
+For generated docs, structured reference data, API specs, language-native docs, manpages, or dynamic docs sites, follow `source-normalization.md`.
+
+The rule is the same for every source shape: fetch official versioned material, convert it into auditable Markdown/MDX pages with source URLs and provenance metadata, import those pages, run `opendocu index`, then search and `get` from the local store. Do not add separate search commands or use format-specific answer paths.
+
+Common examples include generated site JSON, OpenAPI/AsyncAPI, GraphQL schemas, protobuf references, rustdoc, Go package docs, Javadoc/KDoc, .NET reference docs, and official package README/changelog/example sets.
+
 ## Official GitHub Tags
 
 For official docs stored in a GitHub repository, prefer immutable tags or commits. Two reliable patterns:
@@ -65,7 +73,7 @@ Record the tag or commit in the source URL. Do not import from a moving branch w
 
 ## Manual Page Writes
 
-When docs are HTML or otherwise messy, fetch enough official pages to preserve the relevant area, convert to Markdown/MDX, and write under:
+When docs are HTML or otherwise messy, fetch enough official pages to preserve the relevant area, normalize them to Markdown/MDX, and write under:
 
 ```text
 ${OPENDOCU_HOME:-~/.opendocu}/libraries/<library>/versions/<version>/pages/<path>.md

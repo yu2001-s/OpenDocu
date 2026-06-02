@@ -13,6 +13,7 @@ Current v1 coverage:
 
 - Markdown/MDX official docs import
 - HTML official docs import
+- generic official source normalization contract for generated docs, API specs, language-native docs, manpages, and sparse package docs
 - version-aware search
 - stale index protection
 - scoped package IDs
@@ -25,6 +26,7 @@ Current v1 coverage:
 - real Node.js HTML gate
 - deterministic 10-library fixture gate
 - deterministic scripted grow/search/get workflow gate
+- deterministic structured-source normalization gate
 - deterministic retrieval-repair replay inside the workflow gate
 - manual five-set live-agent eval harness
 - packaged npm tarball install smoke
@@ -35,3 +37,4 @@ Known non-goals for v1:
 - MCP server
 - hidden network fetches in the CLI
 - LLM summarization inside the CLI
+- built-in crawlers for every documentation platform

@@ -157,7 +157,7 @@ function sourceFrontmatterLines(data) {
   ]);
   return Object.entries(data)
     .filter(([key, value]) => !reserved.has(key) && isScalar(value))
-    .map(([key, value]) => `source_${key}: ${quoteYaml(value)}`);
+    .map(([key, value]) => `${key.startsWith("source_") ? key : `source_${key}`}: ${quoteYaml(value)}`);
 }
 
 function isScalar(value) {

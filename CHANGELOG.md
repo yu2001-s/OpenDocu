@@ -13,3 +13,4 @@
 - Added Claude Code plugin manifest, manual search command, and generic agent instructions.
 - Added README agent install prompt for Codex, Claude Code, and other shell-capable agents.
 - Added real official-doc gates for Node.js Markdown and HTML documentation.
+- Added a generic official-source normalization contract and gate for non-Markdown documentation formats.

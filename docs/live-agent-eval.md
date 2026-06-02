@@ -59,6 +59,7 @@ The grower should:
 
 - use only official docs matching the requested library and version
 - import a broad coherent docs corpus, not targeted answer pages
+- normalize generated or structured official docs into source-backed Markdown/MDX when direct import would lose important content
 - preserve source URLs and version metadata
 - run `opendocu index`
 - run `opendocu doctor`
@@ -84,6 +85,7 @@ Each query agent should:
 - Grower imports blog posts, Stack Overflow, generated summaries, or non-official docs.
 - Grower writes small custom pages tailored to hidden questions.
 - Grower imports the wrong version or mixes versions.
+- Grower answers directly from fetched generated data instead of normalizing, importing, indexing, searching, and using `opendocu get`.
 - Query agent answers from memory after a weak or empty search.
 - Query agent uses semantic-card text as answer authority.
 - Agent treats semantic-card count or graph coverage as more important than raw-doc retrieval success.

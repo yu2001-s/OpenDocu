@@ -27,7 +27,7 @@ opendocu search <library> <keyword...> --version <version>
 ```
 
 4. Use `opendocu get <library@version/path>` when the snippet is promising; `search` finds candidates and `get` reads the full raw source page.
-5. If local docs are missing or too thin, grow the store from official docs, run `opendocu index`, then search again.
+5. If local docs are missing or too thin, grow the store from official docs. Normalize non-Markdown source formats into source-backed Markdown/MDX pages, run `opendocu index`, then search again.
 6. If raw docs contain the answer but the original wording fails or ranks poorly, run retrieval repair: create a minimal source-backed semantic card, validate it, re-index, and replay the failed search.
 7. Answer with the relevant version and source URL when version correctness matters.
 
@@ -35,6 +35,7 @@ opendocu search <library> <keyword...> --version <version>
 
 - For keyword choice, retries, JSON output, and retrieval tactics, read `references/searching.md`.
 - For fetching official docs and adding them without cheating, read `references/growing.md`.
+- For generated docs, structured API data, API specs, language-native docs, and other non-Markdown source shapes, read `references/source-normalization.md`.
 - For version detection and version-boundary rules, read `references/versioning.md`.
 - For semantic map cards, source hashes, aliases, topics, and edges, read `references/semantic-map.md`.
 - For failed searches that need source-backed semantic-card patches, read `references/retrieval-repair.md`.
@@ -51,4 +52,5 @@ opendocu search <library> <keyword...> --version <version>
 - There is one indexing command: `opendocu index`. It activates valid semantic cards and rebuilds raw-doc search artifacts.
 - Keep version boundaries strict. Never mix major versions without saying so.
 - Preserve official source pages broadly enough that niche details remain searchable.
+- Normalize any official source format into auditable Markdown/MDX before import; do not answer directly from a format-specific fetch.
 - Run `opendocu index` after writing or importing docs.

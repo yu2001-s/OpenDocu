@@ -28,6 +28,8 @@ This is not an autonomous-agent ingestion test. It does not prove an agent can r
 
 `npm run gate:network` imports broad official Node.js `v24.16.0` documentation from live official sources in both Markdown and HTML form. This is stronger evidence for real docs growth, but it depends on network availability and upstream access.
 
+`npm run gate:normalization` starts from a structured official-source fixture rather than Markdown or HTML. It normalizes generated API data into source-backed Markdown pages, imports them through the real CLI, indexes, checks provenance metadata, searches exact symbols and niche parameter terms, reads raw pages with `opendocu get`, and confirms absent local evidence stays absent.
+
 `npm run gate:package` packs the npm tarball, installs it into a temporary prefix, and verifies the installed `opendocu` binary can import, index, and search a small local source tree.
 
 `npm run gate:release` composes `check`, fixture, workflow simulation, package, and network gates.
@@ -43,6 +45,7 @@ The deterministic fixture gate covers:
 - medium SDK/runtime docs: Stripe, Supabase, Cloudflare Workers
 - poor/sparse docs: a tiny cache package with missing TTL coverage
 - Markdown and HTML import paths
+- generic source normalization from structured official data into Markdown/MDX
 - exact versions, major-only docs, and minor-version exclusion
 - scoped package IDs
 - aliases such as `nodejs -> node`
@@ -59,6 +62,7 @@ Minimum acceptance:
 - source URLs are present in search results
 - `opendocu doctor` reports a ready index
 - a failed search can be repaired only after raw evidence is found and replayed through ordinary `opendocu search`
+- normalized non-Markdown official sources keep clean `source_format`, `source_adapter`, and source URL provenance
 
 Higher-standard acceptance:
 

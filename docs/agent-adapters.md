@@ -18,6 +18,7 @@ Adapters must not add hidden fetching, LLM summarization, or MCP behavior to the
 - search with explicit keywords
 - fetch official docs outside the CLI when local docs are missing
 - import local Markdown/MDX or HTML docs
+- normalize other official source formats into source-backed Markdown/MDX before import
 - repair retrieval with source-backed semantic map cards when raw docs exist but search needs aliases, topics, or relationships
 - rebuild the local index
 - answer from retrieved local evidence
@@ -50,4 +51,4 @@ node "${CLAUDE_PLUGIN_ROOT}/bin/opendocu.mjs"
 
 ## Other Agents
 
-For agents without a native plugin format, point the agent at `AGENTS.md` and make sure it can run shell commands. The agent should call the same CLI commands and follow the same search/version rules as the Codex and Claude adapters.
+For agents without a native plugin format, point the agent at `AGENTS.md` and make sure it can run shell commands. The agent should call the same CLI commands, normalize generated official docs before import when needed, and follow the same search/version rules as the Codex and Claude adapters.
