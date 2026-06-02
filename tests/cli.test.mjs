@@ -46,6 +46,20 @@ Use NextResponse cookies in middleware.
   assert.match(output.at(-1), /nextjs@15\/middleware/);
 });
 
+test("index is store-wide and rejects scoped filters", async () => {
+  const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
+  const io = { out: () => {} };
+
+  await assert.rejects(
+    runCli(["index", "--library", "node", "--store", store], io),
+    /unknown option: --library/,
+  );
+  await assert.rejects(
+    runCli(["index", "--version", "24", "--store", store], io),
+    /unknown option: --version/,
+  );
+});
+
 test("search supports option-like keywords", async () => {
   const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
   const docPath = path.join(

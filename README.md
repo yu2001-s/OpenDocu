@@ -1,21 +1,25 @@
 # OpenDocu
 
-OpenDocu is a local-first documentation memory for coding agents.
+OpenDocu is a coding-agent plugin for finding, growing, and reusing official documentation.
 
-The CLI is intentionally deterministic. It does not fetch from the internet, crawl arbitrary websites, summarize docs, or interpret user questions. Agents do that work through the bundled skill. OpenDocu stores versioned Markdown or MDX files, builds one raw-doc search index, and returns ranked source-backed matches.
+The plugin searches a local versioned documentation store first. When local docs are missing or too thin, the bundled skill guides the agent to search the internet for official sources, fetch the relevant docs, normalize them into source-backed Markdown or MDX, index them locally, and answer from cited raw documentation.
+
+The CLI is the deterministic storage and retrieval layer. It imports local files, builds one raw-doc search index, activates source-backed semantic retrieval cards, and returns ranked matches with source URLs. The CLI itself does not fetch from the internet, crawl websites, summarize docs, or interpret user questions; the agent does that work through the plugin workflow.
 
 ## Install
-
-```bash
-npm install -g opendocu
-opendocu --help
-```
 
 From this repository:
 
 ```bash
 npm install
 node bin/opendocu.mjs --help
+```
+
+After the npm package is published:
+
+```bash
+npm install -g opendocu
+opendocu --help
 ```
 
 Agent install prompt:

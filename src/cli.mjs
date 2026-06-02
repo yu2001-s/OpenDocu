@@ -38,10 +38,7 @@ export async function runCli(argv, io = defaultIo()) {
 
     case "index": {
       await initStore(storeRoot);
-      const index = await buildIndex(storeRoot, {
-        library: parsed.flags.library,
-        version: parsed.flags.version,
-      });
+      const index = await buildIndex(storeRoot);
       io.out(
         [
           `Indexed ${index.stats.docs} docs, ${index.stats.chunks} chunks, ${index.stats.terms} terms`,
@@ -246,10 +243,10 @@ function parseArgs(argv) {
         positionals.push(arg);
         continue;
       }
+      if (!kind) {
+        throw new Error(`unknown option: --${rawKey}`);
+      }
       if (rawValue !== undefined) {
-        if (!kind && command) {
-          throw new Error(`unknown option: --${rawKey}`);
-        }
         flags[key] = rawValue;
       } else if (kind === "boolean") {
         flags[key] = true;
@@ -283,7 +280,7 @@ function flagKind(command, key) {
   const valueFlags = {
     "": new Set(["store"]),
     init: new Set(["store"]),
-    index: new Set(["store", "library", "version"]),
+    index: new Set(["store"]),
     alias: new Set(["store"]),
     resolve: new Set(["store"]),
     import: new Set(["store", "urlBase"]),
@@ -520,7 +517,7 @@ Usage:
   opendocu import-html <library> <version> <source-dir> [--url-base <url>] [--store <path>]
   opendocu alias <alias> <library> [--store <path>]
   opendocu resolve <library> [--store <path>] [--json]
-  opendocu index [--store <path>] [--library <name>] [--version <version>]
+  opendocu index [--store <path>]
   opendocu search <library> <keyword...> [--version <version>] [--limit <n>] [--match all|any|auto] [--json] [--allow-stale]
   opendocu get <library@version/path> [--store <path>]
   opendocu get --library <name> --version <version> --path <path> [--store <path>]

@@ -10,7 +10,13 @@ Security fixes target the latest major version, currently `1.x`.
 
 ## Reporting
 
-Report security issues privately to the project maintainer before public disclosure. If this repository is mirrored to GitHub, use GitHub private vulnerability reporting when available.
+Report security issues privately before public disclosure by opening a GitHub private vulnerability report:
+
+```text
+https://github.com/yu2001-s/OpenDocu/security/advisories/new
+```
+
+Do not include exploit details in public issues. If private vulnerability reporting is unavailable, open a public issue asking for a private security contact without including sensitive details.
 
 ## Threat Model
 

@@ -1,8 +1,17 @@
 {
   "name": "opendocu",
   "version": "1.0.1",
-  "description": "Local-first versioned documentation search for coding agents.",
+  "description": "Coding-agent plugin and deterministic local documentation search.",
   "type": "module",
+  "author": "OpenDocu contributors",
+  "homepage": "https://github.com/yu2001-s/OpenDocu#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yu2001-s/OpenDocu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yu2001-s/OpenDocu/issues"
+  },
   "bin": {
     "opendocu": "./bin/opendocu.mjs"
   },
@@ -34,8 +43,8 @@
     "gate:real": "node scripts/real_node_gate.mjs",
     "gate:html": "node scripts/real_html_gate.mjs",
     "gate:network": "npm run gate:real && npm run gate:html",
-    "gate:all": "npm run gate:network",
-    "gate:release": "npm run check && npm run gate:fixture && npm run gate:normalization && npm run gate:workflow-sim && npm run gate:package && npm run gate:network",
+    "gate:all": "npm run gate:fixture && npm run gate:normalization && npm run gate:workflow-sim && npm run gate:package && npm run gate:network",
+    "gate:release": "npm run check && npm run gate:all",
     "eval:live:plan": "node scripts/live_agent_eval.mjs plan",
     "eval:live:score": "node scripts/live_agent_eval.mjs score"
   },
