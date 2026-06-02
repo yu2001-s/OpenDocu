@@ -20,14 +20,14 @@ The skill is the intelligence layer:
 - fetch official documentation with the agent's normal tools when local docs are missing
 - preserve original docs as Markdown or MDX
 - run `opendocu index` after raw docs change
-- maintain semantic cards when aliases, topics, or relationships should improve retrieval
+- repair retrieval with semantic cards when raw docs exist but search misses aliases, topics, or relationships
 - search again and answer from cited local material
 
 ## Source Of Truth
 
 Markdown and MDX files under `libraries/<library>/versions/<version>/pages/` are canonical. `opendocu index` is the only raw-doc indexing command. It writes a SQLite search artifact for normal CLI queries and a JSON debug artifact under `index/`; both are disposable and must be rebuilt whenever raw doc files change.
 
-The `libraries/<library>/versions/<version>/map/` directory is a semantic retrieval layer maintained by the agent. It can contain API cards, concept summaries, aliases, topics, same-version links, comparisons, and version notes, plus `README.md` and `log.md`. Semantic cards are derived routing metadata, not authority and not a second search interface. Each card must include raw OpenDocu `sources` and matching `source_hashes`; `opendocu index` excludes invalid cards and activates valid cards for ordinary `opendocu search`.
+The `libraries/<library>/versions/<version>/map/` directory is a semantic retrieval layer maintained by the agent. It can contain API cards, concept summaries, aliases, topics, same-version links, comparisons, and version notes, plus `README.md` and `log.md`. Semantic cards are targeted retrieval patches, not authority, not a complete graph over the docs, and not a second search interface. Each card must include raw OpenDocu `sources` and matching `source_hashes`; `opendocu index` excludes invalid cards and activates valid cards for ordinary `opendocu search`.
 
 ## Search Reliability
 
@@ -40,6 +40,8 @@ Search defaults to `--match auto`, where strict all-keyword matching is attempte
 OpenDocu refuses normal searches when the index is stale. Staleness includes missing index files, source files newer than the index, or indexed source files that have been deleted.
 
 Semantic cards are intentionally integrated into raw-doc search. Agents use `opendocu search` once; semantic matches can route and boost raw source docs, but final answers should still verify important claims with `opendocu get`.
+
+The expected feedback loop is failure-driven: search local docs, retry with better terms, grow official docs if the store is incomplete, and only then add a minimal source-backed card when `opendocu get` or direct inspection confirms the raw page already contains the answer. After `opendocu map validate` and `opendocu index`, replay the failed search. If it does not route to the raw source doc, revise or remove the card.
 
 ## Versioning
 

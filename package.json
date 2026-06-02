@@ -28,12 +28,15 @@
     "validate:repo": "node scripts/validate_repo.mjs",
     "check": "npm test && npm run validate:repo && node bin/opendocu.mjs --help",
     "gate:fixture": "node scripts/release_gate.mjs",
+    "gate:workflow-sim": "node scripts/workflow_sim_gate.mjs",
     "gate:package": "node scripts/package_smoke.mjs",
     "gate:real": "node scripts/real_node_gate.mjs",
     "gate:html": "node scripts/real_html_gate.mjs",
     "gate:network": "npm run gate:real && npm run gate:html",
     "gate:all": "npm run gate:network",
-    "gate:release": "npm run check && npm run gate:fixture && npm run gate:package && npm run gate:network"
+    "gate:release": "npm run check && npm run gate:fixture && npm run gate:workflow-sim && npm run gate:package && npm run gate:network",
+    "eval:live:plan": "node scripts/live_agent_eval.mjs plan",
+    "eval:live:score": "node scripts/live_agent_eval.mjs score"
   },
   "engines": {
     "node": ">=24"

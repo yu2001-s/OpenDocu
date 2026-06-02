@@ -14,4 +14,5 @@ Rules:
 - Do not search with a full natural-language question.
 - Pass `--version` when the requested or project version is known.
 - Use `opendocu get` for the best result when full-page context is needed.
+- Treat semantic cards as optional routing hints; final evidence must come from raw docs.
 - Answer from retrieved local docs and mention version/source when version correctness matters.

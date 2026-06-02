@@ -92,7 +92,9 @@ Do not create a tiny page tailored only to the user's current question. Store th
 
 ## Semantic Cards After Growth
 
-After importing broad raw docs, create or update semantic map cards when the docs use vocabulary that users are unlikely to search for, when a concept spans multiple headings, or when repeated questions need aliases/topics/relationships. Run:
+After importing broad raw docs, do not try to build a complete semantic graph. Raw official docs are the knowledge base.
+
+Create or update semantic map cards only when retrieval needs a patch: the docs use vocabulary that users are unlikely to search for, a concept spans multiple headings, a real query missed the right raw doc, or repeated questions need aliases/topics/relationships. Run:
 
 ```bash
 opendocu map validate <library> --version <version>
@@ -100,3 +102,5 @@ opendocu index
 ```
 
 Do not summarize unsupported claims into semantic cards. Cards must point to raw doc IDs and matching `source_hashes`.
+
+For a failed-search feedback loop, follow `retrieval-repair.md`: find the raw evidence first, add a minimal card, validate, index, then replay the failed search.

@@ -15,6 +15,10 @@ test("semantic map cards are activated by index and route normal search to raw d
 
   await runCli(["import", "node", "24", source, "--url-base", "https://nodejs.org/api", "--store", store], io);
   await runCli(["index", "--store", store], io);
+  await runCli(["search", "node", "resume", "saved", "scope", "--version", "24", "--match", "all", "--json", "--store", store], io);
+  const preRepair = JSON.parse(output.at(-1));
+  assert.equal(preRepair.results.length, 0);
+
   await runCli(["map", "init", "node", "24", "--store", store], io);
   await assert.doesNotReject(fs.access(path.join(semanticMapPath(store, "node", "24"), "README.md")));
 
@@ -33,14 +37,14 @@ title: "AsyncLocalStorage snapshot"
 kind: "api"
 sources: "node@24/api/async-context"
 source_hashes: "${sourceHash}"
-aliases: "snapshot, captured context, execution context"
+aliases: "snapshot, captured context, execution context, resume saved scope"
 topics: "async context, context propagation"
 edges: "node@24/api/async-context#AsyncLocalStorage.run"
 ---
 
 # AsyncLocalStorage snapshot
 
-Semantic card: snapshot captures a context and lets code re-enter it later.
+Retrieval patch for user wording around resuming a saved async scope.
 `,
   );
 
@@ -59,7 +63,7 @@ Semantic card: snapshot captures a context and lets code re-enter it later.
   );
 
   await runCli(["index", "--store", store], io);
-  await runCli(["search", "node", "captured", "--version", "24", "--json", "--store", store], io);
+  await runCli(["search", "node", "resume", "saved", "scope", "--version", "24", "--match", "all", "--json", "--store", store], io);
   const search = JSON.parse(output.at(-1));
   assert.equal(search.results[0].doc_id, "node@24/api/async-context");
   assert.equal(search.results[0].semantic_matches[0].title, "AsyncLocalStorage snapshot");

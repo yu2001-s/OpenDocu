@@ -25,7 +25,7 @@ kind: "semantic-map-readme"
 
 # ${library} ${version} Semantic Map
 
-Add source-backed semantic cards under this directory. Cards can describe APIs, concepts, tasks, aliases, topics, and simple relationships, but final answers still use raw OpenDocu source docs.
+Add source-backed semantic cards under this directory only when they improve retrieval to raw docs. Cards can describe APIs, concepts, tasks, aliases, topics, and simple relationships, but they are retrieval patches rather than a complete graph. Final answers still use raw OpenDocu source docs.
 `,
   );
 

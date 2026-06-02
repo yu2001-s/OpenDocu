@@ -525,7 +525,7 @@ Usage:
   opendocu get <library@version/path> [--store <path>]
   opendocu get --library <name> --version <version> --path <path> [--store <path>]
 
-  Semantic map maintenance:
+  Retrieval repair metadata:
   opendocu map init <library> <version> [--store <path>]
   opendocu map validate <library> --version <version> [--json] [--store <path>]
   opendocu map list <library> --version <version> [--json] [--store <path>]
@@ -536,6 +536,6 @@ Usage:
 
 Run opendocu index after importing or editing raw docs or semantic cards. It builds both raw-doc search artifacts and activates valid semantic map cards.
 Search defaults to --match auto: exact all-keyword matching first, then any-keyword fallback if empty.
-Semantic cards improve ranking and routing inside opendocu search. Search results remain raw official doc evidence.
+Semantic cards are optional retrieval patches inside opendocu search. Search results remain raw official doc evidence.
 The CLI is deterministic. Agents choose keywords, fetch docs, and write Markdown files.`;
 }

@@ -421,7 +421,12 @@ const SKILL_CONTRACTS = [
   {
     id: "semantic-map-contract",
     file: "skills/opendocu/references/semantic-map.md",
-    mustContain: ["opendocu map validate", "source_hashes", "Before final answers, read raw docs", "opendocu search"],
+    mustContain: ["opendocu map validate", "source_hashes", "Before final answers, read raw docs", "retrieval patches"],
+  },
+  {
+    id: "retrieval-repair-contract",
+    file: "skills/opendocu/references/retrieval-repair.md",
+    mustContain: ["failed search", "opendocu get", "Replay the original failed search", "Do not create cards from model memory"],
   },
 ];
 
@@ -544,6 +549,49 @@ async function validateGrowth() {
 }
 
 async function runSemanticMapCases() {
+  const failedSearchArgs = [
+    "search",
+    "node",
+    "resume",
+    "saved",
+    "scope",
+    "--version",
+    "24.16.0",
+    "--match",
+    "all",
+    "--limit",
+    "1",
+    "--json",
+  ];
+  const initialMiss = JSON.parse(runOpenDocu(failedSearchArgs).stdout);
+  addCheck(
+    "retrieval-repair-initial-miss",
+    initialMiss.results.length === 0,
+    `expected alias query to miss before card, got ${initialMiss.results[0]?.doc_id || "none"}`,
+  );
+
+  const evidenceSearch = JSON.parse(
+    runOpenDocu([
+      "search",
+      "node",
+      "AsyncLocalStorage.snapshot",
+      "context",
+      "--version",
+      "24.16.0",
+      "--limit",
+      "1",
+      "--json",
+    ]).stdout,
+  );
+  const evidenceDocId = evidenceSearch.results[0]?.doc_id;
+  addCheck("retrieval-repair-found-raw-doc", evidenceDocId === "node@24.16.0/async_context", `expected raw doc, got ${evidenceDocId || "none"}`);
+  const evidencePage = evidenceDocId ? runOpenDocu(["get", evidenceDocId]).stdout : "";
+  addCheck(
+    "retrieval-repair-confirmed-with-get",
+    /captures the current execution context/.test(evidencePage),
+    "raw doc should contain the answer before card creation",
+  );
+
   runOpenDocu(["map", "init", "node", "24.16.0"]);
   const sourceDocPath = path.join(
     STORE,
@@ -577,14 +625,14 @@ title: "AsyncLocalStorage snapshot"
 kind: "api"
 sources: "node@24.16.0/async_context"
 source_hashes: "${sourceHash}"
-aliases: "snapshot, captured context, execution context"
+aliases: "snapshot, captured context, execution context, resume saved scope, saved async scope"
 topics: "async context, context propagation"
 edges: "node@24.16.0/async_context#AsyncLocalStorage.run"
 ---
 
 # AsyncLocalStorage snapshot
 
-Semantic card: \`AsyncLocalStorage.snapshot()\` captures the current execution context and returns a function that re-enters that captured context.
+Retrieval patch for user wording around resuming a saved async scope. Answers still come from the raw official async context page.
 `,
   );
 
@@ -597,26 +645,14 @@ Semantic card: \`AsyncLocalStorage.snapshot()\` captures the current execution c
 
   runOpenDocu(["index"]);
 
-  const search = JSON.parse(
-    runOpenDocu([
-      "search",
-      "node",
-      "captured",
-      "context",
-      "--version",
-      "24.16.0",
-      "--limit",
-      "1",
-      "--json",
-    ]).stdout,
-  );
+  const search = JSON.parse(runOpenDocu(failedSearchArgs).stdout);
   addCheck(
-    "semantic-map-search-routes-raw-doc",
+    "retrieval-repair-replay-routes-raw-doc",
     search.results[0]?.doc_id === "node@24.16.0/async_context",
-    `expected raw doc via semantic map, got ${search.results[0]?.doc_id || "none"}`,
+    `expected repaired search to return raw doc, got ${search.results[0]?.doc_id || "none"}`,
   );
   addCheck(
-    "semantic-map-search-has-card",
+    "retrieval-repair-replay-has-card",
     search.results[0]?.semantic_matches?.[0]?.file === "apis/asynclocalstorage-snapshot.md",
     `expected semantic card routing hint, got ${search.results[0]?.semantic_matches?.[0]?.file || "none"}`,
   );
@@ -632,7 +668,8 @@ Semantic card: \`AsyncLocalStorage.snapshot()\` captures the current execution c
 
   return [
     {
-      id: "node-semantic-map",
+      id: "node-retrieval-repair",
+      initial_miss_count: initialMiss.results.length,
       validation_status: validation.status,
       source_hash_ok: source?.hash_ok === true,
       top_doc_id: search.results[0]?.doc_id || null,

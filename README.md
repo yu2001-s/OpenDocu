@@ -43,7 +43,7 @@ opendocu list
 opendocu doctor
 ```
 
-Semantic map maintenance, after raw docs exist:
+Retrieval repair, after raw docs exist and a search misses because of wording:
 
 ```bash
 opendocu map init node 24.16.0
@@ -121,7 +121,9 @@ Original documentation content goes here.
 
 The Markdown or MDX file under `pages/` is the source of truth. `opendocu index` is the only indexing command; it builds both the SQLite search artifact and JSON debug artifact under `index/`, and activates valid semantic map cards.
 
-The `map/` directory is an agent-maintained semantic layer for aliases, topics, reusable summaries, concept pages, comparisons, and cross-links. It is not a second source of truth and does not have its own search interface. Semantic cards must reference raw OpenDocu doc IDs and matching source hashes; `opendocu index` excludes invalid cards and `opendocu search` uses active cards only to route and rank raw official doc evidence.
+The `map/` directory is an agent-maintained semantic layer for aliases, topics, reusable summaries, concept pages, comparisons, and cross-links. It is not a second source of truth, not a complete graph over the docs, and does not have its own search interface. Semantic cards must reference raw OpenDocu doc IDs and matching source hashes; `opendocu index` excludes invalid cards and `opendocu search` uses active cards only to route and rank raw official doc evidence.
+
+Source docs are the knowledge base. Semantic cards are retrieval patches: create them when a real search misses or misranks raw evidence because the user's wording, aliases, or cross-topic relationship is not obvious in the original docs. After card edits, validate, index, and replay the failed query.
 
 ## Agent Boundary
 
@@ -140,7 +142,7 @@ The OpenDocu skill handles:
 - choosing search keywords
 - fetching official docs when local docs are missing
 - preserving source material as Markdown or MDX
-- maintaining semantic cards when aliases, topics, or relationships improve retrieval
+- repairing retrieval with source-backed semantic cards when raw docs exist but search misses aliases, topics, or relationships
 - running `opendocu index`
 - answering from cited local docs
 
@@ -163,7 +165,10 @@ npm run check
 npm run gate:fixture
 npm run gate:network
 npm run gate:release
+npm run eval:live:plan -- --run-dir .tmp/live-agent-eval/run-001
+npm run eval:live:score -- .tmp/live-agent-eval/run-001
 ```
 
 The fixture gate grows an empty store across 10 library scenarios, then checks retrieval, version boundaries, option-like keywords, sparse-doc behavior, `get`, stale index rejection, and skill contracts.
 The network gates import official Node.js `v24.16.0` docs in both Markdown and HTML forms, then ask niche versioned API questions through OpenDocu search.
+The live-agent eval is a manual five-set blind test for agent judgment: growers do not see query prompts, and query agents must answer from local OpenDocu evidence. See `docs/live-agent-eval.md`.

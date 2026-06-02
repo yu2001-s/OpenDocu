@@ -15,6 +15,12 @@ The CLI is keyword-first. Convert the user's request into terms the official doc
 Search defaults to `--match auto`: it tries all keywords first, then falls back to any keyword only if strict matching is empty.
 When valid semantic cards are active, `opendocu search` may use their aliases, topics, and relationships to route results. The returned results are still raw official doc chunks.
 
+`opendocu search` and `opendocu get` are different steps:
+
+- `search` finds ranked candidate chunks from local docs.
+- `get` reads one exact raw source page in full.
+- A failed search is a signal to retry, grow docs, or repair retrieval. It is not evidence by itself.
+
 Use `opendocu resolve <library>` before searching if the name could be an alias. Use `opendocu alias <alias> <library>` when a local store uses a canonical name but the project uses another name.
 
 Good:
@@ -42,6 +48,12 @@ opendocu search nextjs "how do I set cookies in middleware?"
 3. If still empty, search headings or module names: `async_context`, `middleware`, `NextResponse`.
 4. If strict matching is too narrow, retry with fewer terms or use `--match any` intentionally.
 5. If there are many plausible results, use `--json` and inspect `heading_path`, `url`, `version`, `snippet`, and any `semantic_matches` routing hints.
+
+If every retry fails, do not invent a doc ID. Classify the miss:
+
+- if the local store lacks the docs, grow from official sources and index again;
+- if raw docs exist but wording caused the miss, follow `retrieval-repair.md`;
+- if no local evidence exists, say so instead of answering from memory.
 
 ## Result Discipline
 

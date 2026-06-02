@@ -71,7 +71,7 @@ For shell-capable agents without native OpenDocu packaging, point the agent at `
 
 ## Semantic Map
 
-After importing raw official docs, agents can maintain semantic cards for aliases, topics, and relationships. Rebuild the index so ordinary search can use them:
+After importing raw official docs, agents can add semantic cards as retrieval patches for aliases, topics, and relationships. Rebuild the index so ordinary search can use them:
 
 ```bash
 opendocu map init node 24.16.0
@@ -80,4 +80,4 @@ opendocu index
 opendocu search node AsyncLocalStorage snapshot --version 24.16.0
 ```
 
-Semantic cards are stored next to the raw docs under `libraries/<library>/versions/<version>/map/` and must validate back to raw source doc IDs and hashes. They are not answer evidence; use `opendocu get` on raw docs before answering.
+Semantic cards are stored next to the raw docs under `libraries/<library>/versions/<version>/map/` and must validate back to raw source doc IDs and hashes. They are not answer evidence and are not a complete graph; use `opendocu get` on raw docs before answering. Keep a card only when it improves a failed or weak search back to raw official docs.

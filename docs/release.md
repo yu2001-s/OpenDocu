@@ -12,7 +12,9 @@ Verify:
 - `package.json` version matches `.claude-plugin/plugin.json`
 - `src/constants.mjs` reports the same CLI version
 - `CHANGELOG.md` contains the release entry
-- deterministic fixture, package install, and real network gates pass
+- deterministic fixture, workflow simulation, package install, and real network gates pass
+- workflow simulation includes failure-driven retrieval repair replay
+- live-agent eval has a recent five-set pass or documented waiver
 - `npm view opendocu version` still returns 404 or an older published version
 
 ## Publish
@@ -29,4 +31,4 @@ For v1, position OpenDocu as:
 
 > Local-first official documentation memory for coding agents.
 
-Do not claim global hosted coverage parity with Context7. OpenDocu's v1 strength is local reuse, inspectable storage, deterministic search, versioned citations, and agent-verifiable growth.
+Do not claim global hosted coverage parity with Context7 or complete semantic-graph coverage. OpenDocu's v1 strength is local reuse, inspectable source docs, deterministic search, versioned citations, agent-verifiable growth, and source-backed retrieval repair.

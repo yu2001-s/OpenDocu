@@ -12,7 +12,7 @@ OpenDocu intentionally starts from a different boundary:
 - local Markdown/MDX files are the source of truth
 - SQLite FTS and JSON debug artifacts are derived from one `opendocu index` run
 - the CLI is deterministic and does not fetch or summarize websites
-- the skill teaches agents how to fetch official docs, grow the store, index, and search
+- the skill teaches agents how to fetch official docs, grow the store, index, search, and repair retrieval only when raw docs already contain the evidence
 
 ## Competitive Bar
 
@@ -41,6 +41,7 @@ Passing gates should prove more than search speed:
 - fetch or import broad official docs before questions are answered
 - preserve version metadata and source URLs
 - answer niche questions from `opendocu search` and `opendocu get`
+- treat semantic cards as optional retrieval patches, not a required complete graph
 - use an independent agent forward test without leaking the expected answer
 
 Raw filesystem search may be faster on small corpora. OpenDocu must be better for coding agents by returning ranked chunks with version, heading path, source URL, snippets, and machine-readable JSON.

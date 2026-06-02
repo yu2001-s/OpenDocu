@@ -59,6 +59,28 @@ HTML import preserved versioned source URLs and ranked these niche sections firs
 
 ## Semantic Map Fixture Gate
 
-The deterministic release fixture initializes a semantic map for `node@24.16.0`, writes a source-backed `AsyncLocalStorage.snapshot()` API card, validates its `sources` and `source_hashes` against the imported raw docs, rebuilds the index, and confirms ordinary `opendocu search` routes a semantic-only query back to the raw official doc.
+The deterministic release fixture initializes a semantic map for `node@24.16.0`, records an alias-style search miss, finds the raw `AsyncLocalStorage.snapshot()` page with better terms, writes a source-backed retrieval card, validates its `sources` and `source_hashes` against the imported raw docs, rebuilds the index, and confirms ordinary `opendocu search` routes the original failed query back to the raw official doc.
 
 The semantic map remains routing metadata. Final answers still verify claims through raw docs with `opendocu get`.
+
+## Workflow Simulation Gate
+
+`npm run gate:workflow-sim` covers the CLI workflow shape in a repeatable way. It starts with an empty store, imports official Node.js docs through the CLI, indexes raw docs first, checks `doctor`, records a failed user-phrasing search, finds the raw evidence, creates a source-backed semantic card, validates it, re-indexes, replays the failed search, and checks `doctor` again.
+
+It then runs multiple scripted query personas against that grown store:
+
+| Persona | User question shape | Required behavior |
+| --- | --- | --- |
+| Easy API | `AsyncLocalStorage.snapshot()` | keyword search, version filter, `get`, raw evidence |
+| Option keyword | `--watch` | option-like keyword handling |
+| Known CLI flag | `--version` | `--` separator before the searched flag |
+| Retrieval repair | saved scope phrasing | raw doc result with semantic routing hint after replay |
+| No evidence | missing `AbortSignal.timeout()` page | no answer from absent local evidence |
+
+This gate is deterministic CI evidence for the mechanics of the grow/search/get workflow and failure-driven retrieval repair. It does not prove autonomous ingestion quality. Live subagent runs remain necessary spot checks for whether agents naturally choose the right official sources, import broad enough docs, repair retrieval only when raw evidence exists, and answer from local evidence.
+
+## Live-Agent Eval Harness
+
+`npm run eval:live:plan` generates a manual five-set blind eval for Node.js, React, Next.js, Python, and README-centric package docs. Each set starts from an empty store, gives one grower agent only the library/version and official-source rule, then runs independent query agents against the grown store. Query sets include easy lookups, exact symbols, version-specific details, cross-page concepts, semantic-alias phrasing, and negative/no-evidence questions.
+
+`npm run eval:live:score -- <run-dir>` scores the JSON reports for official sources, index/doctor readiness, versioned search, `opendocu get`, cited raw docs, and correct refusal behavior. This is the release diagnostic for autonomous ingestion quality; deterministic gates remain the release-blocking CLI checks. Do not interpret low card counts as failure when raw-doc retrieval answers the hidden questions.

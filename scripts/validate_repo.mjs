@@ -54,7 +54,12 @@ if (pluginJson.mcpServers || claudePluginJson.mcpServers) {
   errors.push("OpenDocu must not declare MCP servers");
 }
 
-for (const scriptName of ["gate:fixture", "gate:package", "gate:network", "gate:release"]) {
+for (const scriptName of ["gate:fixture", "gate:workflow-sim", "gate:package", "gate:network", "gate:release"]) {
+  if (typeof packageJson.scripts?.[scriptName] !== "string" || packageJson.scripts[scriptName].trim() === "") {
+    errors.push(`package.json scripts must include ${scriptName}`);
+  }
+}
+for (const scriptName of ["eval:live:plan", "eval:live:score"]) {
   if (typeof packageJson.scripts?.[scriptName] !== "string" || packageJson.scripts[scriptName].trim() === "") {
     errors.push(`package.json scripts must include ${scriptName}`);
   }
@@ -70,6 +75,9 @@ validatePackageFiles([
 validateSkill("skills/opendocu");
 validateCommand("commands/search.md");
 validateReadmeInstallPrompt("README.md");
+validateLiveEvalDoc("docs/live-agent-eval.md");
+validateRetrievalRepairDoc("skills/opendocu/references/retrieval-repair.md");
+validateSourceFirstAlignment();
 rejectTodoMarkers([
   "AGENTS.md",
   "README.md",
@@ -78,6 +86,7 @@ rejectTodoMarkers([
   "commands/search.md",
   "docs/agent-adapters.md",
   "skills/opendocu/SKILL.md",
+  "skills/opendocu/references/retrieval-repair.md",
 ]);
 
 if (errors.length > 0) {
@@ -178,12 +187,126 @@ function validateReadmeInstallPrompt(relativePath) {
   }
 }
 
+function validateLiveEvalDoc(relativePath) {
+  const filePath = path.join(ROOT, relativePath);
+  let content = "";
+  try {
+    content = fs.readFileSync(filePath, "utf8");
+  } catch {
+    errors.push(`${relativePath} is missing`);
+    return;
+  }
+
+  for (const required of ["npm run eval:live:plan", "npm run eval:live:score", "Do not show query prompts or answer keys"]) {
+    if (!content.includes(required)) {
+      errors.push(`${relativePath} must mention ${required}`);
+    }
+  }
+}
+
+function validateRetrievalRepairDoc(relativePath) {
+  const filePath = path.join(ROOT, relativePath);
+  let content = "";
+  try {
+    content = fs.readFileSync(filePath, "utf8");
+  } catch {
+    errors.push(`${relativePath} is missing`);
+    return;
+  }
+
+  for (const required of ["Retrieval repair", "opendocu get", "Replay the original failed search", "Do not create cards from model memory"]) {
+    if (!content.includes(required)) {
+      errors.push(`${relativePath} must mention ${required}`);
+    }
+  }
+}
+
+function validateSourceFirstAlignment() {
+  const requiredByFile = {
+    "README.md": ["Source docs are the knowledge base", "Semantic cards are retrieval patches"],
+    "AGENTS.md": ["Raw official docs are the knowledge base", "replay the failed search"],
+    "commands/search.md": ["semantic cards as optional routing hints", "raw docs"],
+    "docs/architecture.md": ["targeted retrieval patches", "feedback loop is failure-driven"],
+    "docs/validation-gate.md": ["source-first retrieval", "failure-driven semantic-card repair"],
+    "docs/validation-report.md": ["failure-driven retrieval repair", "Do not interpret low card counts as failure"],
+    "skills/opendocu/SKILL.md": ["run retrieval repair", "Raw official docs are the knowledge base"],
+    "skills/opendocu/references/searching.md": ["`opendocu search` and `opendocu get` are different steps", "follow `retrieval-repair.md`"],
+    "skills/opendocu/references/semantic-map.md": ["retrieval patches", "Do not attempt to mirror every original doc page"],
+    "skills/opendocu/references/validation.md": ["Low semantic-card counts are not a failure", "justified as retrieval patches"],
+    "src/cli.mjs": ["Retrieval repair metadata", "optional retrieval patches"],
+    "scripts/release_gate.mjs": ["retrieval-repair-initial-miss", "retrieval-repair-replay-routes-raw-doc"],
+    "scripts/workflow_sim_gate.mjs": ["repair-initial-search-miss", "repair-replay-routes-raw-doc"],
+    "scripts/live_agent_eval.mjs": ["Raw docs are the knowledge base", "Correct raw-doc retrieval is enough"],
+  };
+
+  for (const [relativePath, requiredTerms] of Object.entries(requiredByFile)) {
+    const content = readTextIfExists(relativePath);
+    if (!content) {
+      errors.push(`${relativePath} is missing`);
+      continue;
+    }
+    for (const required of requiredTerms) {
+      if (!content.includes(required)) {
+        errors.push(`${relativePath} must align with source-first retrieval repair: missing ${required}`);
+      }
+    }
+  }
+
+  const forbiddenPhrases = [
+    "Semantic map maintenance",
+    "semantic-only query",
+    "semantic-card quality",
+    "create semantic cards only when useful",
+    "maintain semantic cards when aliases",
+    "maintain the semantic map well",
+  ];
+  const filesToScan = [
+    "README.md",
+    "AGENTS.md",
+    "commands/search.md",
+    "docs/agent-adapters.md",
+    "docs/architecture.md",
+    "docs/install.md",
+    "docs/validation-gate.md",
+    "docs/validation-report.md",
+    "docs/live-agent-eval.md",
+    "skills/opendocu/SKILL.md",
+    "skills/opendocu/references/growing.md",
+    "skills/opendocu/references/searching.md",
+    "skills/opendocu/references/semantic-map.md",
+    "skills/opendocu/references/validation.md",
+    "src/cli.mjs",
+    "scripts/live_agent_eval.mjs",
+  ];
+
+  for (const relativePath of filesToScan) {
+    const content = readTextIfExists(relativePath);
+    if (!content) {
+      continue;
+    }
+    for (const phrase of forbiddenPhrases) {
+      if (content.includes(phrase)) {
+        errors.push(`${relativePath} contains outdated source-first wording: ${phrase}`);
+      }
+    }
+  }
+}
+
 function validatePackageFiles(entries) {
   const files = Array.isArray(packageJson.files) ? packageJson.files : [];
   for (const entry of entries) {
     if (!files.includes(entry)) {
       errors.push(`package.json files must include ${entry}`);
     }
+  }
+}
+
+function readTextIfExists(relativePath) {
+  const filePath = path.join(ROOT, relativePath);
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch {
+    return "";
   }
 }
 
