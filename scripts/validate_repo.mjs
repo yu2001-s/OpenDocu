@@ -54,7 +54,7 @@ if (pluginJson.mcpServers || claudePluginJson.mcpServers) {
   errors.push("OpenDocu must not declare MCP servers");
 }
 
-for (const scriptName of ["gate:fixture", "gate:normalization", "gate:workflow-sim", "gate:package", "gate:network", "gate:release"]) {
+for (const scriptName of ["build:plugin", "gate:fixture", "gate:normalization", "gate:workflow-sim", "gate:package", "gate:network", "gate:release"]) {
   if (typeof packageJson.scripts?.[scriptName] !== "string" || packageJson.scripts[scriptName].trim() === "") {
     errors.push(`package.json scripts must include ${scriptName}`);
   }
@@ -72,6 +72,7 @@ validatePackageFiles([
   "skills/",
   "AGENTS.md",
 ]);
+requiredFile("scripts/build_plugin_bundle.mjs");
 validateSkill("skills/opendocu");
 validateCommand("commands/search.md");
 validateReadmeInstallPrompt("README.md");
@@ -120,6 +121,12 @@ function requiredString(object, key, file) {
 function requiredHttpsString(object, key, file) {
   if (typeof object[key] !== "string" || !object[key].startsWith("https://")) {
     errors.push(`${file} field ${key} must be an https:// URL`);
+  }
+}
+
+function requiredFile(relativePath) {
+  if (!fs.existsSync(path.join(ROOT, relativePath))) {
+    errors.push(`${relativePath} is missing`);
   }
 }
 

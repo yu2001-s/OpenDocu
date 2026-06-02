@@ -28,6 +28,14 @@ Agent install prompt:
 Install the OpenDocu coding-agent plugin from https://github.com/yu2001-s/OpenDocu.
 ```
 
+For local Codex plugin evaluation or marketplace installation, build the lean plugin bundle instead
+of pointing Codex at the full development checkout:
+
+```bash
+npm run build:plugin
+plugin-eval analyze dist/opendocu --format markdown
+```
+
 ## Commands
 
 Raw official-doc workflow:
