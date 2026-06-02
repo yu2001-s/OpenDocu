@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { buildIndex, initStore } from "../src/indexer.mjs";
 import { importHtmlTree, importMarkdownTree } from "../src/importer.mjs";
 import { searchIndex } from "../src/search.mjs";
+import { resolveVersionCandidates } from "../src/versioning.mjs";
 
 test("indexes versioned markdown and returns source-backed chunk matches", async () => {
   const store = await makeStore();
@@ -83,6 +84,21 @@ test("keeps versions separate", async () => {
 
   assert.equal(result.count, 1);
   assert.equal(result.results[0].doc_id, "react@19/reference/use-transition");
+});
+
+test("version resolution avoids newer minor versions for specific project versions", () => {
+  assert.deepEqual(
+    resolveVersionCandidates(["15.2", "15.4"], "15.3.2"),
+    ["15.3.2"],
+  );
+  assert.deepEqual(
+    resolveVersionCandidates(["15.2", "15.3.1", "15.4"], "15.3.2"),
+    ["15.3.1"],
+  );
+  assert.deepEqual(
+    resolveVersionCandidates(["15", "15.4"], "15.3.2"),
+    ["15"],
+  );
 });
 
 test("symbol-aware tokenization finds niche API symbols", async () => {

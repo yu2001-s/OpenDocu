@@ -1,6 +1,6 @@
 ---
 name: opendocu
-description: Use OpenDocu when a coding task needs official framework, library, SDK, runtime, or tool documentation from a local versioned docs store; when local docs are missing and should be grown from official sources; or when answering version-sensitive API questions with cited local docs instead of model memory.
+description: Use when a coding task needs official framework, library, SDK, runtime, or tool documentation from a local versioned docs store; when local docs are missing and should be grown from official sources; or when answering version-sensitive API questions with cited local docs instead of model memory.
 ---
 
 # OpenDocu

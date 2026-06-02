@@ -222,12 +222,24 @@ function parseArgs(argv) {
       version = true;
       continue;
     }
+    if (arg === "--" && command) {
+      positionals.push(...argv.slice(index + 1));
+      break;
+    }
     if (arg.startsWith("--")) {
       const [rawKey, rawValue] = arg.slice(2).split("=", 2);
       const key = rawKey.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      const kind = flagKind(command, key);
+      if (!kind && command === "search") {
+        positionals.push(arg);
+        continue;
+      }
       if (rawValue !== undefined) {
+        if (!kind && command) {
+          throw new Error(`unknown option: --${rawKey}`);
+        }
         flags[key] = rawValue;
-      } else if (["json", "allowStale"].includes(key)) {
+      } else if (kind === "boolean") {
         flags[key] = true;
       } else {
         const value = argv[index + 1];
@@ -249,15 +261,47 @@ function parseArgs(argv) {
   return { command, positionals, flags, help, version };
 }
 
+function flagKind(command, key) {
+  const booleanFlags = {
+    resolve: new Set(["json"]),
+    search: new Set(["json", "allowStale"]),
+    list: new Set(["json"]),
+  };
+  const valueFlags = {
+    "": new Set(["store"]),
+    init: new Set(["store"]),
+    index: new Set(["store", "library", "version"]),
+    alias: new Set(["store"]),
+    resolve: new Set(["store"]),
+    import: new Set(["store", "urlBase"]),
+    "import-html": new Set(["store", "urlBase"]),
+    search: new Set(["store", "version", "limit", "match"]),
+    get: new Set(["store", "library", "version", "path"]),
+    list: new Set(["store"]),
+    doctor: new Set(["store"]),
+  };
+
+  if (booleanFlags[command]?.has(key)) {
+    return "boolean";
+  }
+  if (valueFlags[command || ""]?.has(key)) {
+    return "value";
+  }
+  return "";
+}
+
 async function resolveDocFile(storeRoot, doc) {
-  const base = pagesPath(storeRoot, doc.library, doc.version);
+  const base = path.resolve(pagesPath(storeRoot, doc.library, doc.version));
   const candidates = [
-    path.join(base, `${doc.pagePath}.md`),
-    path.join(base, `${doc.pagePath}.mdx`),
-    path.join(base, `${doc.pagePath}.markdown`),
+    path.resolve(base, `${doc.pagePath}.md`),
+    path.resolve(base, `${doc.pagePath}.mdx`),
+    path.resolve(base, `${doc.pagePath}.markdown`),
   ];
 
   for (const candidate of candidates) {
+    if (!isPathInside(candidate, base)) {
+      throw new Error(`document path escapes library pages: ${doc.pagePath}`);
+    }
     try {
       const stat = await fs.stat(candidate);
       if (stat.isFile()) {
@@ -269,6 +313,11 @@ async function resolveDocFile(storeRoot, doc) {
   }
 
   throw new Error(`document not found: ${doc.library}@${doc.version}/${doc.pagePath}`);
+}
+
+function isPathInside(candidate, base) {
+  const relative = path.relative(base, candidate);
+  return relative && !relative.startsWith("..") && !path.isAbsolute(relative);
 }
 
 function parseGetFlags(flags) {

@@ -17,15 +17,33 @@ export function resolveVersionCandidates(availableVersions, requestedVersion) {
   }
 
   const aliases = semverAliases(requested);
-  const alias = aliases.find((candidate) => available.includes(candidate));
-  if (alias) {
-    return [alias];
+  const requestedParts = numericParts(requested);
+  const lessSpecificAliases = aliases.slice(1);
+  for (const alias of lessSpecificAliases.slice(0, -1)) {
+    if (available.includes(alias)) {
+      return [alias];
+    }
   }
 
-  const compatible = available
-    .filter((version) => aliases.some((candidate) => version === candidate || version.startsWith(`${candidate}.`)))
-    .sort(compareVersionDesc);
-  return compatible.length > 0 ? compatible : [requested];
+  const compatible =
+    requestedParts.length >= 2
+      ? available
+          .filter((version) => isSameMinor(version, requested) && compareVersionAsc(version, requested) <= 0)
+          .sort(compareVersionDesc)
+      : available
+          .filter((version) => isSameMajor(version, requested))
+          .sort(compareVersionDesc);
+
+  if (compatible.length > 0) {
+    return compatible;
+  }
+
+  const majorAlias = lessSpecificAliases.at(-1);
+  if (majorAlias && available.includes(majorAlias)) {
+    return [majorAlias];
+  }
+
+  return [requested];
 }
 
 export function semverAliases(version) {
@@ -53,6 +71,27 @@ function compareVersionDesc(a, b) {
     }
   }
   return String(b).localeCompare(String(a));
+}
+
+function compareVersionAsc(a, b) {
+  return compareVersionDesc(b, a);
+}
+
+function isSameMinor(version, requested) {
+  const versionParts = numericParts(version);
+  const requestedParts = numericParts(requested);
+  return (
+    versionParts.length >= 2 &&
+    requestedParts.length >= 2 &&
+    versionParts[0] === requestedParts[0] &&
+    versionParts[1] === requestedParts[1]
+  );
+}
+
+function isSameMajor(version, requested) {
+  const versionParts = numericParts(version);
+  const requestedParts = numericParts(requested);
+  return versionParts.length >= 1 && requestedParts.length >= 1 && versionParts[0] === requestedParts[0];
 }
 
 function numericParts(version) {

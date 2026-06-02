@@ -38,8 +38,16 @@ if (!claudePluginJson.skills || claudePluginJson.skills !== "./skills/") {
   errors.push("Claude plugin skills path must be ./skills/");
 }
 
-if (!pluginJson.interface?.defaultPrompt) {
-  errors.push("plugin interface.defaultPrompt is required");
+if (
+  !Array.isArray(pluginJson.interface?.defaultPrompt) ||
+  pluginJson.interface.defaultPrompt.length === 0 ||
+  !pluginJson.interface.defaultPrompt.every((prompt) => typeof prompt === "string" && prompt.trim())
+) {
+  errors.push("plugin interface.defaultPrompt must be a non-empty array of strings");
+}
+
+for (const field of ["websiteURL", "privacyPolicyURL", "termsOfServiceURL"]) {
+  requiredHttpsString(pluginJson.interface || {}, field, ".codex-plugin/plugin.json interface");
 }
 
 if (pluginJson.mcpServers || claudePluginJson.mcpServers) {
@@ -89,6 +97,12 @@ function readJson(relativePath) {
 function requiredString(object, key, file) {
   if (typeof object[key] !== "string" || object[key].trim() === "") {
     errors.push(`${file} field ${key} must be a non-empty string`);
+  }
+}
+
+function requiredHttpsString(object, key, file) {
+  if (typeof object[key] !== "string" || !object[key].startsWith("https://")) {
+    errors.push(`${file} field ${key} must be an https:// URL`);
   }
 }
 

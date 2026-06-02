@@ -23,7 +23,10 @@ opendocu search nextjs middleware cookies NextResponse --version 15
 opendocu search react useTransition Actions pending --version 19
 opendocu search node AsyncLocalStorage.snapshot context --version 24.16.0
 opendocu search node diagnostics_channel tracingChannel hasSubscribers --version 24.16.0
+opendocu search node --version 24.16.0 -- --watch
 ```
+
+Use `--` before search keywords that begin with `--` when they could be confused with OpenDocu flags, such as `--version`.
 
 Bad:
 

@@ -46,6 +46,45 @@ Use NextResponse cookies in middleware.
   assert.match(output.at(-1), /nextjs@15\/middleware/);
 });
 
+test("search supports option-like keywords", async () => {
+  const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
+  const docPath = path.join(
+    store,
+    "libraries",
+    "node",
+    "versions",
+    "24",
+    "pages",
+    "cli.md",
+  );
+  await fs.mkdir(path.dirname(docPath), { recursive: true });
+  await fs.writeFile(
+    docPath,
+    `---
+library: node
+version: "24"
+title: CLI options
+url: https://nodejs.org/api/cli.html
+---
+
+# CLI options
+
+Use \`--watch\` for watch mode. Use \`--version\` to print the Node.js version.
+`,
+  );
+
+  const output = [];
+  const io = { out: (value) => output.push(value) };
+  await runCli(["index", "--store", store], io);
+  await runCli(["search", "node", "--watch", "--version", "24", "--store", store], io);
+  assert.match(output.at(-1), /Search: node --watch/);
+  assert.match(output.at(-1), /node@24\/cli/);
+
+  await runCli(["search", "node", "--version", "24", "--store", store, "--", "--version"], io);
+  assert.match(output.at(-1), /Search: node --version/);
+  assert.match(output.at(-1), /node@24\/cli/);
+});
+
 test("default search relaxes from all to any only when strict search is empty", async () => {
   const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
   const docPath = path.join(
@@ -264,6 +303,29 @@ Create a Supabase client with createClient.
     io,
   );
   assert.match(output.at(-1), /Create a Supabase client/);
+});
+
+test("get refuses page paths that escape the library pages directory", async () => {
+  const store = await fs.mkdtemp(path.join(os.tmpdir(), "opendocu-cli-"));
+  const io = { out: () => {} };
+
+  await assert.rejects(
+    runCli(
+      [
+        "get",
+        "--library",
+        "node",
+        "--version",
+        "24",
+        "--path",
+        "../../../../../../secret",
+        "--store",
+        store,
+      ],
+      io,
+    ),
+    /document path escapes library pages/,
+  );
 });
 
 test("search refuses stale index after a source document is deleted", async () => {

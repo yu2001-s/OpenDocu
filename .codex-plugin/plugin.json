@@ -5,6 +5,15 @@
   "author": {
     "name": "OpenDocu contributors"
   },
+  "homepage": "https://github.com/yu2001-s/OpenDocu",
+  "repository": "https://github.com/yu2001-s/OpenDocu",
+  "license": "MIT",
+  "keywords": [
+    "coding-agent",
+    "documentation",
+    "search",
+    "local-first"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "OpenDocu",
@@ -17,6 +26,11 @@
       "Version-aware documentation",
       "Agent-maintained knowledge store"
     ],
-    "defaultPrompt": "Use OpenDocu to search local official docs before answering."
+    "websiteURL": "https://github.com/yu2001-s/OpenDocu",
+    "privacyPolicyURL": "https://github.com/yu2001-s/OpenDocu/blob/main/SECURITY.md",
+    "termsOfServiceURL": "https://github.com/yu2001-s/OpenDocu/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Use OpenDocu to search local official docs before answering."
+    ]
   }
 }
